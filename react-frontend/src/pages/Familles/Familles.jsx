@@ -25,7 +25,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import Sidebar from '../components/layout/sidebar';
+import Sidebar from '../../components/layout/sidebar';
 import axios from 'axios';
 
 // Color tokens

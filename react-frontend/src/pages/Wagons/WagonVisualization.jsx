@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import '../components/layout/FourBoxViewer.css';
+import '../../components/layout/FourBoxViewer.css';
 import {
     Box,
     Typography,

@@ -19,7 +19,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import Sidebar from '../components/layout/sidebar';
+import Sidebar from '../../components/layout/sidebar';
 import axios from 'axios';
 
 const colors = {

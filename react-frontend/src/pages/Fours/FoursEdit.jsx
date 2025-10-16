@@ -8,7 +8,7 @@ import {
   Typography,
   Alert
 } from '@mui/material';
-import Sidebar from '../components/layout/sidebar';
+import Sidebar from '../../components/layout/sidebar';
 import axios from 'axios';
 
 export default function FoursEdit() {

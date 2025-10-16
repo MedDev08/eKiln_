@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import Sidebar from '../components/layout/sidebar';
+import Sidebar from '../../components/layout/sidebar';
 import axios from 'axios';
 import {
   Box,

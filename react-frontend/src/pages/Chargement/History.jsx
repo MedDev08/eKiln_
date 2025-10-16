@@ -382,7 +382,7 @@ import { PieChart } from 'react-minimal-pie-chart';
 import CloseIcon from '@mui/icons-material/Close';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import HistoryIcon from '@mui/icons-material/History';
-import Sidebar from '../components/layout/sidebar';
+import Sidebar from '../../components/layout/sidebar';
 
 const HistoryPage = () => {
   const [period, setPeriod] = useState('today');

@@ -3,7 +3,7 @@ import { Typography, Box, Grid, Card, CardContent, Container, CircularProgress }
 import axios from 'axios';
 import Sidebar from '../components/layout/sidebar.jsx';
 import TotalPiecesChart from '../components/layout/TotalPiecesChart';
-import WagonsRecap from "../pages/WagonsRecap";
+import WagonsRecap from "./Chargement/WagonsRecap.jsx";
 import ShiftChart from '../components/layout/shiftChart.jsx';
 
 const Header = ({ title, subtitle }) => (

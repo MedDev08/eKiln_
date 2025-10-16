@@ -15,7 +15,7 @@
     "@mui/icons-material": "^7.3.2",
     "@mui/lab": "^7.0.0-beta.12",
     "@mui/material": "^7.1.0",
-    "@mui/toolpad-core": "^0.1.51",
+    "@mui/toolpad-core": "^0.1.23",
     "@mui/x-data-grid": "^8.3.0",
     "@mui/x-data-grid-pro": "^8.11.3",
     "@toolpad/core": "^0.14.0",

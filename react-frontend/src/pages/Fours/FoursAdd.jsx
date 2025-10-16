@@ -22,7 +22,7 @@ import {
   Paper
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/layout/sidebar';
+import Sidebar from '../../components/layout/sidebar';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import AddIcon from '@mui/icons-material/Add';

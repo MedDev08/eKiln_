@@ -10,7 +10,7 @@
 // }
 
 import React, { useState } from 'react';
-import Sidebar from '../components/layout/sidebar';
+import Sidebar from '../../components/layout/sidebar';
 import axios from 'axios';
 import {
   Box,

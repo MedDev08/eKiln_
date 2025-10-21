@@ -27,6 +27,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CircularProgress from '@mui/material/CircularProgress';
 import {Autocomplete} from "@mui/material";
+import SidebarChef from '../components/layout/SidebarChef';
 // Ajoutez ce composant avant le composant ChefDashboard
 const ChargementContent = () => {
   const [familles, setFamilles] = useState([]);
@@ -276,6 +277,7 @@ useEffect(() => {
   }, [selectedWagon]);
 
   return (
+   <SidebarChef>
     <Box sx={{ p: 3 }}>
       {error && (
         <Alert 
@@ -735,6 +737,7 @@ useEffect(() => {
         </Box>
       </Modal>
     </Box>
+  </SidebarChef>
   );
 };
 export default ChargementContent;

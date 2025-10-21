@@ -382,7 +382,7 @@ import { PieChart } from 'react-minimal-pie-chart';
 import CloseIcon from '@mui/icons-material/Close';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import HistoryIcon from '@mui/icons-material/History';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 
 const HistoryPage = () => {
   const [period, setPeriod] = useState('today');
@@ -481,7 +481,7 @@ const HistoryPage = () => {
   };
 
   return (
-    <Sidebar>
+    <SidebarChef>
       <Box sx={{ p: isMobile ? 1 : 3 }}>
         <Typography variant="h4" gutterBottom sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
           <HistoryIcon sx={{ mr: 2, fontSize: '2rem' }} />
@@ -699,7 +699,7 @@ const HistoryPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Sidebar>
+    </SidebarChef>
   );
 };
 

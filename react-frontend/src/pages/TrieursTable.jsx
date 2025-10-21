@@ -29,6 +29,7 @@ import MenuItem from '@mui/material/MenuItem';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Checkbox from '@mui/material/Checkbox';
 import ListItemText from '@mui/material/ListItemText';
+import SidebarChef from '../components/layout/SidebarChef';
 // Component: TrieursTable
 const TrieursTable = () => {
   const [trieurs, setTrieurs] = useState([]);
@@ -180,6 +181,7 @@ const fetchTrieurs = async () => {
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
+   <SidebarChef>
     <TableContainer component={Paper}>
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -351,6 +353,7 @@ const fetchTrieurs = async () => {
         </Table>
       </Box>
     </TableContainer>
+    </SidebarChef>
   );
 };
 export default TrieursTable;

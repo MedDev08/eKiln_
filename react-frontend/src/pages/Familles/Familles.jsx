@@ -25,7 +25,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 
 // Color tokens
@@ -107,12 +107,12 @@ export default function Familles() {
   const columns = [
     { field: 'id_famille', headerName: 'ID', width: 100 },
     { field: 'nom_famille', headerName: 'Nom Famille', width: 350 },
-    { field: 'valeur_trieur', headerName: 'Valeur Trieur', width: 350 },
+    { field: 'valeur_trieur', headerName: 'Valeur Trieur', width: 250 },
     
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 1000,
+      width: 300,
       sortable: false,
       renderCell: (params) => (
         <>
@@ -228,7 +228,7 @@ export default function Familles() {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <Sidebar initialPath="/settings/familles">
+    <SidebarChef initialPath="/settings/familles">
       <Box m="30px">
         <Header
           title="Manage Familles"
@@ -334,6 +334,6 @@ export default function Familles() {
           </Snackbar>
         </Box>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 }

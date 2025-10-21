@@ -22,6 +22,7 @@ import Modal from '@mui/material/Modal';
 import Stack from '@mui/material/Stack';
 import SaveIcon from '@mui/icons-material/Save';
 import LoadingButton from '@mui/lab/LoadingButton';
+import SidebarChef from '../components/layout/SidebarChef';
 
 const EnfourneurTable = () => {
   const [enfourneurs, setEnfourneurs] = useState([]);
@@ -118,6 +119,7 @@ const EnfourneurTable = () => {
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
+    <SidebarChef>
     <TableContainer component={Paper}>
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -249,6 +251,7 @@ const EnfourneurTable = () => {
         </Table>
       </Box>
     </TableContainer>
+  </SidebarChef>
   );
 };
 export default EnfourneurTable;

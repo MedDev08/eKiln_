@@ -230,7 +230,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 
 // Color tokens (ajouté depuis Familles.jsx)
@@ -317,7 +317,7 @@ export default function GestionWagons() {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 1000,
+      width: 300,
       sortable: false,
       renderCell: (params) => (
         <>
@@ -415,7 +415,7 @@ export default function GestionWagons() {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <Sidebar initialPath="/settings/wagons">
+    <SidebarChef initialPath="/settings/wagons">
       <Box m="30px">
         <Header
           title="WAGON MANAGEMENT"
@@ -522,6 +522,6 @@ export default function GestionWagons() {
           </Snackbar>
         </Box>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 }

@@ -19,7 +19,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 
 const colors = {
@@ -160,7 +160,7 @@ const FoursManagement = () => {
 
   if (loading) {
     return (
-      <Sidebar>
+      <SidebarChef>
         <Box sx={{
           display: 'flex',
           justifyContent: 'center',
@@ -169,12 +169,12 @@ const FoursManagement = () => {
         }}>
           <CircularProgress size={60} sx={{ color: colors.primary[500] }} />
         </Box>
-      </Sidebar>
+      </SidebarChef>
     );
   }
 
   return (
-    <Sidebar>
+    <SidebarChef>
       <Box m="30px">
         <Typography variant="h4" fontWeight={700} color={colors.primary[700]} sx={{ mb: 1 }}>
           Gestion des Fours
@@ -309,7 +309,7 @@ const FoursManagement = () => {
           </Table>
         </TableContainer>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 };
 

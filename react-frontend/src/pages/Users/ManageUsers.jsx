@@ -14,7 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 
 // Color tokens
@@ -102,11 +102,11 @@ export default function EnhancedDataGrid() {
     { field: 'Matricule', headerName: 'Matricule', width: 200 },
     { field: 'Nom', headerName: 'Nom', width: 200 },
     { field: 'Prenom', headerName: 'Prenom', width: 200 },
-    { field: 'Role', headerName: 'Role', width: 200 },
+    { field: 'Role', headerName: 'Role', width: 150 },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 1000,
+      width: 100,
       sortable: false,
       renderCell: (params) => (
         <>
@@ -203,7 +203,7 @@ export default function EnhancedDataGrid() {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <Sidebar initialPath="/manage-users">
+    <SidebarChef initialPath="/manage-users">
       <Box m="30px">
         <Header
           title="Manage Users"
@@ -299,7 +299,7 @@ export default function EnhancedDataGrid() {
           </Dialog>
         </Box>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 }
 // import React, { useState, useEffect } from 'react';

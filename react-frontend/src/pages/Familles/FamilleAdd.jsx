@@ -10,7 +10,7 @@
 // }
 
 import React, { useState } from 'react';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 import {
   Box,
@@ -67,7 +67,7 @@ export default function FamilleAdd() {
   };
 
   return (
-    <Sidebar initialPath="/settings/familles/add">
+    <SidebarChef initialPath="/settings/familles/add">
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
         <Typography
           variant="h4"
@@ -127,7 +127,7 @@ export default function FamilleAdd() {
           {loading ? <CircularProgress size={24} /> : 'Create Famille'}
         </Button>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 }
 

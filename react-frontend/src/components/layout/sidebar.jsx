@@ -46,50 +46,50 @@ const NAVIGATION = [
     icon: <SupervisorAccountIcon />,
     path: '/chefDashboard'
   },
-  {
-    segment: 'settings',
-    title: 'Settings',
-    icon: <SettingsApplicationsIcon />,
-    path: '/settings',
-    children: [
-      {
-        segment: 'fours',
-        title: 'Fours',
-        icon: <DescriptionIcon />,
-        path: '/settings/fours'
-      },
-      {
-        segment: 'wagons',
-        title: 'Wagons',
-        icon: <DescriptionIcon />,
-        path: '/settings/wagons'
-      },
-      {
-        segment: 'familles',
-        title: 'Familles',
-        icon: <DescriptionIcon />,
-        path: '/settings/familles'
-      },
-    ],
-  },
-  {
-    segment: 'manage-users',
-    title: 'Manage Users',
-    icon: <GroupsIcon />,
-    path: '/manage-users'
-  },
+  // {
+  //   segment: 'settings',
+  //   title: 'Settings',
+  //   icon: <SettingsApplicationsIcon />,
+  //   path: '/settings',
+  //   children: [
+  //     {
+  //       segment: 'fours',
+  //       title: 'Fours',
+  //       icon: <DescriptionIcon />,
+  //       path: '/settings/fours'
+  //     },
+  //     {
+  //       segment: 'wagons',
+  //       title: 'Wagons',
+  //       icon: <DescriptionIcon />,
+  //       path: '/settings/wagons'
+  //     },
+  //     {
+  //       segment: 'familles',
+  //       title: 'Familles',
+  //       icon: <DescriptionIcon />,
+  //       path: '/settings/familles'
+  //     },
+  //   ],
+  // },
+  // {
+  //   segment: 'manage-users',
+  //   title: 'Manage Users',
+  //   icon: <GroupsIcon />,
+  //   path: '/manage-users'
+  // },
   {
     segment: 'wagon_visualization',
     title: 'Wagon Visualization',
     icon: <SubwayIcon />,
     path: '/wagon_visualization'
   },
-  {
-    segment: 'history',
-    title: 'History / Archives',
-    icon: <HistoryIcon />,
-    path: '/history'
-  },
+  // {
+  //   segment: 'history',
+  //   title: 'History / Archives',
+  //   icon: <HistoryIcon />,
+  //   path: '/history'
+  // },
   /*{
     segment: 'divider',
     type: 'divider',

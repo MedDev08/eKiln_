@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 import {
   Box,
@@ -62,7 +62,7 @@ export default function GestionWagonsAdd() {
   };
 
   return (
-    <Sidebar initialPath="/settings/wagons/add">
+    <SidebarChef initialPath="/settings/wagons/add">
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
         <Typography variant="h4" sx={{ mb: 4, textAlign: 'center' }}>
           Add New Wagon
@@ -118,6 +118,6 @@ export default function GestionWagonsAdd() {
           {loading ? <CircularProgress size={24} /> : 'Create Wagon'}
         </Button>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 import {
   Box,
@@ -90,16 +90,16 @@ export default function GestionWagonsEdit() {
 
   if (loading.form) {
     return (
-      <Sidebar initialPath="/gestion-wagons/edit">
+      <SidebarChef initialPath="/gestion-wagons/edit">
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <CircularProgress />
         </Box>
-      </Sidebar>
+      </SidebarChef>
     );
   }
 
   return (
-    <Sidebar initialPath="/settings/wagons/edit">
+    <SidebarChef initialPath="/settings/wagons/edit">
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
         <Typography variant="h4" sx={{ mb: 4, textAlign: 'center' }}>
           Edit Wagon
@@ -155,6 +155,6 @@ export default function GestionWagonsEdit() {
           {loading.submit ? <CircularProgress size={24} /> : 'Update Wagon'}
         </Button>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 }

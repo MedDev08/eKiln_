@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 import {
   Box,
@@ -94,7 +94,7 @@ export default function FamilleEdit() {
   }
 
   return (
-    <Sidebar initialPath="/settings/familles/edit">
+    <SidebarChef initialPath="/settings/familles/edit">
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
         <Box
           sx={{
@@ -161,6 +161,6 @@ export default function FamilleEdit() {
           {loading.submit ? <CircularProgress size={24} /> : 'Update Famille'}
         </Button>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 }

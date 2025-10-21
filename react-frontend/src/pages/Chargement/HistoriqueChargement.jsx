@@ -41,6 +41,7 @@ import {
 } from '@mui/icons-material';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import SidebarChef from '../../components/layout/SidebarChef';
 
 const HistoriqueChargement = () => {
   const [chargements, setChargements] = useState([]);
@@ -297,6 +298,7 @@ const handleFilterChange = (field, value) => {
   };
 
   return (
+  <SidebarChef>
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Historique des Chargements
@@ -851,6 +853,7 @@ const handleFilterChange = (field, value) => {
             </Modal>
 
     </Box>
+  </SidebarChef>
   );
 };
 

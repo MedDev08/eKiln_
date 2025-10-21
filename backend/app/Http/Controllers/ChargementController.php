@@ -628,79 +628,6 @@ class ChargementController extends Controller
             ], 404);
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public function getProchainsChargements(Request $request)
     {
         try {
@@ -1363,5 +1290,30 @@ class ChargementController extends Controller
             $interval = CarbonInterval::createFromFormat('H:i:s', $durations[$idFour]);
             return $chargementTime->copy()->add($interval);
         }
+    }
+    public function valider($id, Request $request)
+    {
+        $chargement = Chargement::find($id);
+
+        if (!$chargement) {
+            return response()->json(['message' => 'Chargement non trouvé'], 404);
+        }
+        // On récupère la date entrée depuis le frontend (champs dans le popup)
+        $chargement->date_entrer = $request->date_entrer ?? now();
+        // Calcul de la date de sortie si le chargement a un four
+        if ($chargement->four && $chargement->date_entrer) {
+            $dateEntrer = Carbon::parse($chargement->date_entrer);
+            $dureeSecondes = $chargement->four->duree_cuisson; // durée en secondes
+            $chargement->datetime_sortieEstime = $dateEntrer->copy()->addSeconds($dureeSecondes);
+        }
+        // la date du clic => c’est la date de l’action
+        $chargement->date_action = now();
+        $chargement->statut = 'en cuisson';
+        $chargement->save();
+
+        return response()->json([
+            'message' => 'Chargement validé avec succès',
+            'data' => $chargement
+        ]);
     }
 }

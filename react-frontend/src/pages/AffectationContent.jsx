@@ -55,78 +55,149 @@ import {
 import axios from 'axios';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Tabs, Tab } from '@mui/material';
-import SidebarChef from './SidebarChef';
-
+import SidebarChef from '../components/layout/SidebarChef';
+//  Thème global
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
-      light: '#42a5f5',
-      dark: '#1565c0',
+      main: '#3f51b5', // Bleu profond plus élégant
+      light: '#757de8',
+      dark: '#002984',
     },
     secondary: {
-      main: '#f50057',
-      light: '#ff5983',
-      dark: '#c51162',
+      main: '#f50057', // Rose/violet pour les accents
     },
     background: {
-      default: '#f8fafc',
+      default: '#f8fafc', // Très léger bleu-gris
       paper: '#ffffff',
     },
     text: {
-      primary: '#1e293b',
-      secondary: '#64748b',
+      primary: '#1e293b', // Gris foncé pour le texte
+      secondary: '#64748b', // Gris moyen
+    },
+    success: {
+      main: '#4caf50',
+    },
+    warning: {
+      main: '#ff9800',
+    },
+    error: {
+      main: '#f44336',
+    },
+    info: {
+      main: '#2196f3',
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
+    fontFamily: [
+      '"Inter"',
+      '-apple-system',
+      'BlinkMacSystemFont',
+      '"Segoe UI"',
+      'Roboto',
+      '"Helvetica Neue"',
+      'Arial',
+      'sans-serif',
+      '"Apple Color Emoji"',
+      '"Segoe UI Emoji"',
+      '"Segoe UI Symbol"',
+    ].join(','),
+    h1: {
       fontWeight: 700,
-      fontSize: '1.875rem',
-      lineHeight: 1.2,
+      fontSize: '2.5rem',
     },
-    h5: {
+    h2: {
+      fontWeight: 600,
+      fontSize: '2rem',
+    },
+    h3: {
+      fontWeight: 600,
+      fontSize: '1.75rem',
+    },
+    h4: {
       fontWeight: 600,
       fontSize: '1.5rem',
     },
-    h6: {
+    h5: {
       fontWeight: 600,
       fontSize: '1.25rem',
     },
+    h6: {
+      fontWeight: 600,
+      fontSize: '1.1rem',
+    },
     subtitle1: {
       fontWeight: 500,
-      fontSize: '1rem',
     },
     body1: {
-      fontSize: '0.875rem',
-      lineHeight: 1.5,
+      lineHeight: 1.6,
     },
   },
-  shape: {
-    borderRadius: 12,
-  },
   components: {
-    MuiPaper: {
+    MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-          border: '1px solid #e2e8f0',
+          borderRadius: 12,
+          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.05)',
+          transition: 'box-shadow 0.3s ease, transform 0.3s ease',
+          '&:hover': {
+            boxShadow: '0 8px 30px 0 rgba(0,0,0,0.1)',
+            transform: 'translateY(-2px)',
+          },
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
+          borderRadius: 8,
           textTransform: 'none',
           fontWeight: 500,
-          borderRadius: 8,
-          padding: '8px 20px',
+          padding: '8px 16px',
         },
         contained: {
-          boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+          boxShadow: 'none',
           '&:hover': {
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+            boxShadow: 'none',
           },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+        },
+      },
+    },
+    MuiTable: {
+      styleOverrides: {
+        root: {
+          '& .MuiTableCell-root': {
+            borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+          },
+        },
+      },
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          '&:nth-of-type(odd)': {
+            backgroundColor: '#ffffff',
+          },
+          '&:nth-of-type(even)': {
+            backgroundColor: '#f8fafc',
+          },
+          '&:hover': {
+            backgroundColor: '#f1f5ff',
+          },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
         },
       },
     },
@@ -139,11 +210,10 @@ const theme = createTheme({
         },
       },
     },
-    MuiCard: {
+    MuiSelect: {
       styleOverrides: {
         root: {
-          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-          border: '1px solid #e2e8f0',
+          borderRadius: 8,
         },
       },
     },
@@ -492,7 +562,6 @@ const AffectationContent = () => {
 
   if (loading && !showTrieurSelectionModal && !showNewAffectationModal) {
     return (
-      <SidebarChef>
       <ThemeProvider theme={theme}>
         <Container maxWidth="xl" sx={{ py: 4 }}>
           <Box sx={{ mb: 4 }}>
@@ -520,6 +589,7 @@ const AffectationContent = () => {
   }
 
   return (
+    <SidebarChef>
     <ThemeProvider theme={theme}>
       <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
         <AppBar position="static" elevation={0} sx={{ bgcolor: 'white', borderBottom: '1px solid #e2e8f0' }}>
@@ -743,19 +813,19 @@ const AffectationContent = () => {
 
           {/* Ajout du champ nombre de wagons */}
           <TextField
-  fullWidth
-  label={`Nombre de wagons (${selectedFour === 'f3' ? 'recommandé 30' : 'recommandé 16'})`}
-  type="number"
-  value={wagonCount}
-  onChange={(e) => {
-    const value = Math.max(1, parseInt(e.target.value) || 1); // Minimum 1
-    setWagonCount(value);
-  }}
-  inputProps={{
-    min: 1 // Seule contrainte : minimum 1
-  }}
-  sx={{ mb: 3 }}
-/>
+            fullWidth
+            label={`Nombre de wagons (${selectedFour === 'f3' ? 'recommandé 30' : 'recommandé 16'})`}
+            type="number"
+            value={wagonCount}
+            onChange={(e) => {
+              const value = Math.max(1, parseInt(e.target.value) || 1); // Minimum 1
+              setWagonCount(value);
+            }}
+            inputProps={{
+              min: 1 // Seule contrainte : minimum 1
+            }}
+            sx={{ mb: 3 }}
+          />
 
           {lastChargement && (
             <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
@@ -914,7 +984,6 @@ const AffectationContent = () => {
               </TableContainer>
             </Box>
           </Box>
-
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
             <Button
               variant="outlined"
@@ -930,160 +999,160 @@ const AffectationContent = () => {
 </Modal>
 
         <Modal 
-  open={showDetailsModal} 
-  onClose={() => setShowDetailsModal(false)}
-  closeAfterTransition
-  BackdropComponent={Backdrop}
->
-  <Fade in={showDetailsModal}>
-    <Box sx={{
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: { xs: '90%', sm: 800 },
-      maxHeight: '90vh',
-      overflow: 'auto',
-      bgcolor: 'background.paper',
-      borderRadius: 3,
-      boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    }}>
-      <AppBar position="static" elevation={0} sx={{ bgcolor: 'primary.main', borderRadius: '12px 12px 0 0' }}>
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            Détails des Affectations - {selectedAffectation && selectedAffectation[0] && 
-              new Date(selectedAffectation[0].date_affectation).toLocaleDateString('fr-FR')}
-          </Typography>
-          <IconButton 
-            edge="end" 
-            color="inherit" 
-            onClick={() => setShowDetailsModal(false)}
+            open={showDetailsModal} 
+            onClose={() => setShowDetailsModal(false)}
+            closeAfterTransition
+            BackdropComponent={Backdrop}
           >
-            <CloseIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      
-      {selectedAffectation && Array.isArray(selectedAffectation) && (
-        <Box sx={{ p: 4 }}>
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={6}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 0.5 }}>
-                  Responsable
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {selectedAffectation[0].chef?.prenom} {selectedAffectation[0].chef?.nom}
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={6}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 0.5 }}>
-                  Intervalle
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {(() => {
-                    const date = new Date(selectedAffectation[0].date_affectation);
-                    const hour = date.getHours();
-                    if (hour >= 5 && hour < 14) return 'Matin (5h-14h)';
-                    if (hour >= 14 && hour < 22) return 'Après-midi (14h-22h)';
-                    return 'Nuit (22h-5h)';
-                  })()}
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 0.5 }}>
-                  Wagons concernés
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {selectedAffectation.flatMap(aff => 
-                    aff.wagons?.map(w => w.num_wagon) || []
-                  ).filter((v, i, a) => a.indexOf(v) === i).map(wagonNum => (
-                    <Chip 
-                      key={wagonNum} 
-                      label={wagonNum}
-                      variant="outlined"
-                    />
-                  ))}
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Typography variant="h6" sx={{ mb: 3 }}>
-            Répartition par famille
-          </Typography>
-          
-          {selectedAffectation.map((affectation) => (
-            <Box key={affectation.id_affectation} sx={{ mb: 4 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      {affectation.famille?.nom_famille}
+            <Fade in={showDetailsModal}>
+              <Box sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: { xs: '90%', sm: 800 },
+                maxHeight: '90vh',
+                overflow: 'auto',
+                bgcolor: 'background.paper',
+                borderRadius: 3,
+                boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)',
+              }}>
+                <AppBar position="static" elevation={0} sx={{ bgcolor: 'primary.main', borderRadius: '12px 12px 0 0' }}>
+                  <Toolbar>
+                    <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
+                      Détails des Affectations - {selectedAffectation && selectedAffectation[0] && 
+                        new Date(selectedAffectation[0].date_affectation).toLocaleDateString('fr-FR')}
                     </Typography>
-                    <Typography variant="body2">
-                      {affectation.details?.reduce((sum, detail) => sum + (detail.quantite_tri || 0), 0)} pièces
+                    <IconButton 
+                      edge="end" 
+                      color="inherit" 
+                      onClick={() => setShowDetailsModal(false)}
+                    >
+                      <CloseIcon />
+                    </IconButton>
+                  </Toolbar>
+                </AppBar>
+                
+                {selectedAffectation && Array.isArray(selectedAffectation) && (
+                  <Box sx={{ p: 4 }}>
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                      <Grid item xs={6}>
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                            Responsable
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            {selectedAffectation[0].chef?.prenom} {selectedAffectation[0].chef?.nom}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                            Intervalle
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            {(() => {
+                              const date = new Date(selectedAffectation[0].date_affectation);
+                              const hour = date.getHours();
+                              if (hour >= 5 && hour < 14) return 'Matin (5h-14h)';
+                              if (hour >= 14 && hour < 22) return 'Après-midi (14h-22h)';
+                              return 'Nuit (22h-5h)';
+                            })()}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                            Wagons concernés
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {selectedAffectation.flatMap(aff => 
+                              aff.wagons?.map(w => w.num_wagon) || []
+                            ).filter((v, i, a) => a.indexOf(v) === i).map(wagonNum => (
+                              <Chip 
+                                key={wagonNum} 
+                                label={wagonNum}
+                                variant="outlined"
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+                      </Grid>
+                    </Grid>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Typography variant="h6" sx={{ mb: 3 }}>
+                      Répartition par famille
                     </Typography>
+                    
+                    {selectedAffectation.map((affectation) => (
+                      <Box key={affectation.id_affectation} sx={{ mb: 4 }}>
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                {affectation.famille?.nom_famille}
+                              </Typography>
+                              <Typography variant="body2">
+                                {affectation.details?.reduce((sum, detail) => sum + (detail.quantite_tri || 0), 0)} pièces
+                              </Typography>
+                            </Box>
+
+                            <TableContainer>
+                              <Table size="small">
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell>Trieur</TableCell>
+                                    <TableCell>Matricule</TableCell>
+                                    <TableCell align="right">Quantité</TableCell>
+                                    <TableCell align="right">Valeur trieur</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {affectation.details?.map((detail) => (
+                                    <TableRow key={detail.id_detail_affectation}>
+                                    <TableCell>
+                                      {detail.trieur?.prenom} {detail.trieur?.nom}
+                                    </TableCell>
+                                    <TableCell>
+                                      {detail.trieur?.matricule}
+                                    </TableCell>
+                                    <TableCell align="right">
+                                      {detail.quantite_tri} pièces
+                                    </TableCell>
+                                    <TableCell align="right">
+                                      {detail.valeur_trieur} 
+                                    </TableCell>
+                                  </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          </CardContent>
+                        </Card>
+                      </Box>
+                    ))}
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="subtitle1">
+                        <strong>Nombre total de trieurs:</strong> {selectedAffectation.reduce((sum, aff) => 
+                          sum + [...new Set(aff.details?.map(d => d.id_user))].length, 0)}
+                      </Typography>
+                      <Typography variant="subtitle1">
+                        <strong>Total général:</strong> {selectedAffectation.reduce((sum, aff) => 
+                          sum + (aff.details?.reduce((s, d) => s + (d.quantite_tri || 0), 0) || 0), 0)} pièces
+                      </Typography>
+                    </Box>
                   </Box>
-
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Trieur</TableCell>
-                          <TableCell>Matricule</TableCell>
-                          <TableCell align="right">Quantité</TableCell>
-                          <TableCell align="right">Valeur trieur</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {affectation.details?.map((detail) => (
-                          <TableRow key={detail.id_detail_affectation}>
-  <TableCell>
-    {detail.trieur?.prenom} {detail.trieur?.nom}
-  </TableCell>
-  <TableCell>
-    {detail.trieur?.matricule}
-  </TableCell>
-  <TableCell align="right">
-    {detail.quantite_tri} pièces
-  </TableCell>
-  <TableCell align="right">
-    {detail.valeur_trieur} 
-  </TableCell>
-</TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
-            </Box>
-          ))}
-
-          <Divider sx={{ my: 3 }} />
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="subtitle1">
-              <strong>Nombre total de trieurs:</strong> {selectedAffectation.reduce((sum, aff) => 
-                sum + [...new Set(aff.details?.map(d => d.id_user))].length, 0)}
-            </Typography>
-            <Typography variant="subtitle1">
-              <strong>Total général:</strong> {selectedAffectation.reduce((sum, aff) => 
-                sum + (aff.details?.reduce((s, d) => s + (d.quantite_tri || 0), 0) || 0), 0)} pièces
-            </Typography>
-          </Box>
-        </Box>
-      )}
-    </Box>
-  </Fade>
-</Modal>
+                )}
+              </Box>
+            </Fade>
+         </Modal>
 
         <Modal
         open={showTrieurSelectionModal}
@@ -1151,158 +1220,158 @@ const AffectationContent = () => {
                     <Typography>{currentFamilleForAffectation?.total_pieces}</Typography>
                   </Grid>
                   <Grid item xs={4}>
-      <Typography variant="subtitle2">Valeur trieur:</Typography>
-      <TextField
-        fullWidth
-        size="small"
-        type="number"
-        value={currentFamilleForAffectation?.valeur_trieur || ''}
-        onChange={(e) => {
-          const newValue = parseFloat(e.target.value) || 0;
-          setCurrentFamilleForAffectation({
-            ...currentFamilleForAffectation,
-            valeur_trieur: newValue
-          });
-        }}
-        inputProps={{ min: 1 }}
-      />
-    </Grid>
-  </Grid>
-</Box>
+                    <Typography variant="subtitle2">Valeur trieur:</Typography>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      type="number"
+                      value={currentFamilleForAffectation?.valeur_trieur || ''}
+                      onChange={(e) => {
+                        const newValue = parseFloat(e.target.value) || 0;
+                        setCurrentFamilleForAffectation({
+                          ...currentFamilleForAffectation,
+                          valeur_trieur: newValue
+                        });
+                      }}
+                      inputProps={{ min: 1 }}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
 
               <Typography variant="subtitle2" sx={{ mb: 2 }}>
                 Sélectionnez les trieurs à affecter:
               </Typography>
 
               <TableContainer>
-  <Table size="small">
-    <TableHead>
-      <TableRow>
-        <TableCell>Trieur</TableCell>
-        <TableCell>Quantité à trier</TableCell>
-        <TableCell>Pourcentage</TableCell>
-        <TableCell></TableCell>
-      </TableRow>
-    </TableHead>
-    <TableBody>
-  {selectedTrieur.map((trieurId, index) => {
-    const trieur = filteredTrieurs.find(t => t.id_user === trieurId);
-    const quantite = quantites[trieurId] || 0;
-    const pourcentage = currentFamilleForAffectation?.total_pieces 
-      ? (quantite / currentFamilleForAffectation.total_pieces * 100).toFixed(1) + '%'
-      : '0%';
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Trieur</TableCell>
+                      <TableCell>Quantité à trier</TableCell>
+                      <TableCell>Pourcentage</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                {selectedTrieur.map((trieurId, index) => {
+                  const trieur = filteredTrieurs.find(t => t.id_user === trieurId);
+                  const quantite = quantites[trieurId] || 0;
+                  const pourcentage = currentFamilleForAffectation?.total_pieces 
+                    ? (quantite / currentFamilleForAffectation.total_pieces * 100).toFixed(1) + '%'
+                    : '0%';
 
-    // Vérifier si le trieur est proche de la limite de productivité
-    const isNearLimit = trieur?.productivity && trieur.productivity > 80;
+                  // Vérifier si le trieur est proche de la limite de productivité
+                  const isNearLimit = trieur?.productivity && trieur.productivity > 80;
 
-    return (
-      <TableRow key={trieurId}>
-        <TableCell>
-          <FormControl fullWidth size="small">
-            <Select
-              value={trieurId}
-              onChange={(e) => {
-                const newSelectedTrieurs = [...selectedTrieur];
-                newSelectedTrieurs[index] = e.target.value;
-                setSelectedTrieur(newSelectedTrieurs);
-                
-                const totalPieces = currentFamilleForAffectation?.total_pieces || 0;
-                const valeurTrieur = currentFamilleForAffectation?.valeur_trieur || 0;
-                const currentTotal = Object.values(quantites).reduce((sum, q, i) => 
-                  i !== index ? sum + q : sum, 0);
-                const remaining = totalPieces - currentTotal;
-                
-                const newQuantites = {...quantites};
-                delete newQuantites[trieurId];
-                
-                if (remaining > 0) {
-                  if (index === newSelectedTrieurs.length - 1 && 
-                      newSelectedTrieurs.length >= Math.ceil(currentFamilleForAffectation?.trieurs_needed || 0)) {
-                    newQuantites[e.target.value] = remaining;
-                  } else {
-                    newQuantites[e.target.value] = Math.min(valeurTrieur, remaining);
-                  }
-                } else {
-                  newQuantites[e.target.value] = 0;
-                }
-                
-                setQuantites(newQuantites);
-              }}
-            >
-              {filteredTrieurs.map((t) => (
-                <MenuItem 
-                  key={t.id_user} 
-                  value={t.id_user}
-                  disabled={selectedTrieur.includes(t.id_user) && !trieurId === t.id_user}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {t.prenom} {t.nom} ({t.matricule})
-                    {t.productivity && t.productivity > 80 && (
-                      <Tooltip title={`Productivité élevée (${t.productivity}%)`} arrow>
-                        <ErrorIcon color="warning" sx={{ ml: 1, fontSize: 16 }} />
-                      </Tooltip>
-                    )}
-                  </Box>
-                </MenuItem>
-              ))}
-                </Select>
-              </FormControl>
-            </TableCell>
-            <TableCell>
-              <TextField
-                fullWidth
-                size="small"
-                type="number"
-                value={quantite}
-                onChange={(e) => {
-                  const newValue = parseFloat(e.target.value) || 0;
-                  setQuantites({
-                    ...quantites,
-                    [trieurId]: newValue
-                  });
-                }}
-                inputProps={{ min: 0, step: 0.1 }}
-              />
-            </TableCell>
-            <TableCell>
-              {pourcentage}
-            </TableCell>
-            <TableCell>
-              {index === selectedTrieur.length - 1 && (
-                <IconButton
-                  onClick={() => {
-                    setSelectedTrieur([...selectedTrieur, '']);
-                    setQuantites({
-                      ...quantites,
-                      '': 0
-                    });
-                  }}
-                >
-                  <AddIcon />
-                </IconButton>
-              )}
-              {selectedTrieur.length > 1 && (
-                <IconButton
-                  onClick={() => {
-                    const newSelected = [...selectedTrieur];
-                    newSelected.splice(index, 1);
-                    setSelectedTrieur(newSelected);
-                    
-                    const newQuantites = {...quantites};
-                    delete newQuantites[trieurId];
-                    setQuantites(newQuantites);
-                  }}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              )}
-            </TableCell>
-          </TableRow>
-        );
-      })}
-    </TableBody>
-  </Table>
-</TableContainer>
+                  return (
+                    <TableRow key={trieurId}>
+                      <TableCell>
+                        <FormControl fullWidth size="small">
+                          <Select
+                            value={trieurId}
+                            onChange={(e) => {
+                              const newSelectedTrieurs = [...selectedTrieur];
+                              newSelectedTrieurs[index] = e.target.value;
+                              setSelectedTrieur(newSelectedTrieurs);
+                              
+                              const totalPieces = currentFamilleForAffectation?.total_pieces || 0;
+                              const valeurTrieur = currentFamilleForAffectation?.valeur_trieur || 0;
+                              const currentTotal = Object.values(quantites).reduce((sum, q, i) => 
+                                i !== index ? sum + q : sum, 0);
+                              const remaining = totalPieces - currentTotal;
+                              
+                              const newQuantites = {...quantites};
+                              delete newQuantites[trieurId];
+                              
+                              if (remaining > 0) {
+                                if (index === newSelectedTrieurs.length - 1 && 
+                                    newSelectedTrieurs.length >= Math.ceil(currentFamilleForAffectation?.trieurs_needed || 0)) {
+                                  newQuantites[e.target.value] = remaining;
+                                } else {
+                                  newQuantites[e.target.value] = Math.min(valeurTrieur, remaining);
+                                }
+                              } else {
+                                newQuantites[e.target.value] = 0;
+                              }
+                              
+                              setQuantites(newQuantites);
+                            }}
+                          >
+                            {filteredTrieurs.map((t) => (
+                              <MenuItem 
+                                key={t.id_user} 
+                                value={t.id_user}
+                                disabled={selectedTrieur.includes(t.id_user) && !trieurId === t.id_user}
+                              >
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                  {t.prenom} {t.nom} ({t.matricule})
+                                  {t.productivity && t.productivity > 80 && (
+                                    <Tooltip title={`Productivité élevée (${t.productivity}%)`} arrow>
+                                      <ErrorIcon color="warning" sx={{ ml: 1, fontSize: 16 }} />
+                                    </Tooltip>
+                                  )}
+                                </Box>
+                              </MenuItem>
+                            ))}
+                              </Select>
+                            </FormControl>
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              type="number"
+                              value={quantite}
+                              onChange={(e) => {
+                                const newValue = parseFloat(e.target.value) || 0;
+                                setQuantites({
+                                  ...quantites,
+                                  [trieurId]: newValue
+                                });
+                              }}
+                              inputProps={{ min: 0, step: 0.1 }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {pourcentage}
+                          </TableCell>
+                          <TableCell>
+                            {index === selectedTrieur.length - 1 && (
+                              <IconButton
+                                onClick={() => {
+                                  setSelectedTrieur([...selectedTrieur, '']);
+                                  setQuantites({
+                                    ...quantites,
+                                    '': 0
+                                  });
+                                }}
+                              >
+                                <AddIcon />
+                              </IconButton>
+                            )}
+                            {selectedTrieur.length > 1 && (
+                              <IconButton
+                                onClick={() => {
+                                  const newSelected = [...selectedTrieur];
+                                  newSelected.splice(index, 1);
+                                  setSelectedTrieur(newSelected);
+                                  
+                                  const newQuantites = {...quantites};
+                                  delete newQuantites[trieurId];
+                                  setQuantites(newQuantites);
+                                }}
+                              >
+                                <CloseIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
               <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="body2">
@@ -1344,10 +1413,9 @@ const AffectationContent = () => {
           </Box>
         </Fade>
       </Modal>
-
       </Box>
     </ThemeProvider>
-    </SidebarChef>
+  </SidebarChef>
   );
 };
 

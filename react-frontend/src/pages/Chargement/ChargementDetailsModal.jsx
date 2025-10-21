@@ -1,178 +1,168 @@
-import React from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Typography,
+  Grid,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Divider,
+  TextField,
+  Button,
+  IconButton,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
-const ChargementDetailsModal = ({ chargementId, onClose }) => {
-  const [details, setDetails] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
+export default function ChargementDetailsModal({
+  onClose,
+  chargement,
+  onValidate,
+  getStatusColor,
+}) {
+  // Initialisation de la date de validation
+ const [validationDate, setValidationDate] = useState(new Date());
 
-  React.useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:8000/api/chargements/${chargementId}/popup-details`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-            withCredentials: true,
-          }
-        );
-        
-        if (response.data.success) {
-          setDetails(response.data);
-        } else {
-          setError(response.data.message || 'Erreur lors du chargement des détails');
-        }
-      } catch (err) {
-        setError('Erreur de connexion au serveur');
-        console.error('Erreur API:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Synchroniser validationDate si le chargement change
+ useEffect(() => {
+  if (chargement?.date_entrer) {
+    setValidationDate(new Date(chargement.date_entrer));
+  } else {
+    setValidationDate(new Date());
+  }
+}, [chargement]);
 
-    fetchDetails();
-  }, [chargementId]);
+  // Fonction pour changer uniquement l'heure et les minutes
+  const handleChangeTime = (e) => {
+    const [hours, minutes] = e.target.value.split(":").map(Number);
+    const newDate = new Date(validationDate);
+    newDate.setHours(hours);
+    newDate.setMinutes(minutes);
+    setValidationDate(newDate);
+  };
+
+  const formatDate = (dateString) =>
+    format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: fr });
+
+  if (!chargement) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button className="modal-close" onClick={onClose}>
-          &times;
-        </button>
-        
-        <h2>Détails du chargement</h2>
-        
-        {loading ? (
-          <div className="loading-spinner">
-            <i className="fas fa-spinner fa-spin"></i> Chargement...
-          </div>
-        ) : error ? (
-          <p className="error-message">{error}</p>
-        ) : details ? (
-          <div className="details-container">
-            <div className="detail-row">
-              <span className="detail-label">Wagon:</span>
-              <span>{details.data.wagon_num} ({details.data.wagon_type})</span>
-            </div>
-            <div className="detail-row">
-              <span className="detail-label">Four:</span>
-              <span>{details.data.four_num}</span>
-            </div>
-            <div className="detail-row">
-              <span className="detail-label">Enfourneur:</span>
-              <span>{details.data.enfourneur}</span>
-            </div>
-            <div className="detail-row">
-              <span className="detail-label">Statut:</span>
-              <span>{details.data.statut}</span>
-            </div>
-            <div className="detail-row">
-              <span className="detail-label">Date chargement:</span>
-              <span>{new Date(details.data.date_chargement).toLocaleString()}</span>
-            </div>
-            
-            <h3>Pièces chargées</h3>
-            <table className="pieces-table">
-              <thead>
-                <tr>
-                  <th>Famille</th>
-                  <th>Quantité</th>
-                </tr>
-              </thead>
-              <tbody>
-                {details.data.pieces.map((piece, index) => (
-                  <tr key={index}>
-                    <td>{piece.famille}</td>
-                    <td>{piece.quantite}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
-      </div>
+    <Box
+      sx={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        width: 600,
+        maxHeight: "80vh",
+        overflowY: "auto",
+        bgcolor: "background.paper",
+        boxShadow: 24,
+        p: 4,
+        borderRadius: 2,
+      }}
+    >
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">
+          Valider le chargement #{chargement.id}
+        </Typography>
+        <IconButton onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      </Box>
 
-      <style jsx>{`
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: rgba(0, 0, 0, 0.5);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-        }
-        
-        .modal-content {
-          background-color: white;
-          padding: 20px;
-          border-radius: 5px;
-          width: 80%;
-          max-width: 600px;
-          max-height: 80vh;
-          overflow-y: auto;
-          position: relative;
-        }
-        
-        .modal-close {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          background: none;
-          border: none;
-          font-size: 1.5rem;
-          cursor: pointer;
-        }
-        
-        .details-container {
-          margin-top: 20px;
-        }
-        
-        .detail-row {
-          display: flex;
-          margin-bottom: 10px;
-        }
-        
-        .detail-label {
-          font-weight: bold;
-          width: 150px;
-        }
-        
-        .pieces-table {
-          width: 100%;
-          margin-top: 15px;
-          border-collapse: collapse;
-        }
-        
-        .pieces-table th, .pieces-table td {
-          padding: 8px;
-          border: 1px solid #ddd;
-          text-align: left;
-        }
-        
-        .pieces-table th {
-          background-color: #f5f5f5;
-        }
-        
-        .error-message {
-          color: #e53935;
-          padding: 10px;
-        }
-        
-        .loading-spinner {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 20px;
-        }
-      `}</style>
-    </div>
+      {/* Informations principales */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={6}>
+          <Typography variant="subtitle2">Wagon :</Typography>
+          <Typography>{chargement.wagon?.num_wagon || "N/A"}</Typography>
+        </Grid>
+        <Grid item xs={6}>
+          <Typography variant="subtitle2">Four :</Typography>
+          <Typography>{chargement.four?.num_four || "N/A"}</Typography>
+        </Grid>
+        <Grid item xs={6}>
+          <Typography variant="subtitle2">Date chargement :</Typography>
+          <Typography>{formatDate(chargement.datetime_chargement)}</Typography>
+        </Grid>
+        <Grid item xs={6}>
+          <Typography variant="subtitle2">Statut :</Typography>
+          <Chip
+            label={chargement.statut}
+            color={getStatusColor(chargement.statut)}
+            size="small"
+          />
+        </Grid>
+         <Grid item xs={6}>
+          <Typography variant="subtitle2"> Date sortie estimée :</Typography>
+          <Typography>{formatDate(chargement.datetime_sortieEstime)}</Typography>
+        </Grid>
+      </Grid>
+
+      <Divider sx={{ my: 2 }} />
+
+      {/* Détails des pièces */}
+      <Typography variant="h6" gutterBottom>
+        Détails des pièces
+      </Typography>
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Famille</TableCell>
+              <TableCell align="right">Quantité</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {chargement.details && chargement.details.length > 0 ? (
+              chargement.details.map((detail, index) => (
+                <TableRow key={index}>
+                  <TableCell>{detail.famille?.nom_famille || "N/A"}</TableCell>
+                  <TableCell align="right">{detail.quantite}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={2} align="center">
+                  Aucune famille associée
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Divider sx={{ my: 2 }} />
+
+      {/* Modification de l'heure */}
+      <Typography sx={{ mb: 1 }}>Heure d’entrée :</Typography>
+      <TextField
+        type="time"
+        value={format(validationDate, "HH:mm")}
+        onChange={handleChangeTime}
+        fullWidth
+      />
+
+      {/* Boutons */}
+      <Box display="flex" justifyContent="flex-end" mt={3}>
+        <Button onClick={onClose} sx={{ mr: 2 }}>
+          Annuler
+        </Button>
+        <Button
+          variant="contained"
+          color="success"
+          onClick={() => onValidate(validationDate)}
+        >
+          Valider
+        </Button>
+      </Box>
+    </Box>
   );
-};
-
-export default ChargementDetailsModal;
+}

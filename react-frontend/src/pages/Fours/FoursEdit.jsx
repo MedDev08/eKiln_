@@ -8,7 +8,7 @@ import {
   Typography,
   Alert
 } from '@mui/material';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 
 export default function FoursEdit() {
@@ -93,16 +93,16 @@ export default function FoursEdit() {
 
   if (loading.form) {
     return (
-      <Sidebar>
+      <SidebarChef>
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <CircularProgress />
         </Box>
-      </Sidebar>
+      </SidebarChef>
     );
   }
 
   return (
-    <Sidebar>
+    <SidebarChef>
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3, maxWidth: 600, margin: '0 auto' }}>
         <Typography variant="h4" sx={{ mb: 3, textAlign: 'center' }}>
           Modifier le Four
@@ -151,6 +151,6 @@ export default function FoursEdit() {
           </Button>
         </Box>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 }

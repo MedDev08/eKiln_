@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
@@ -21,7 +22,13 @@ import { AuthProvider } from './context/AuthContext';
 import Familles from './pages/Familles/Familles';
 import FamilleEdit from './pages/Familles/FamilleEdit';
 import FamilleAdd from './pages/Familles/FamilleAdd';
-
+import WagonVisualization from './pages/Wagons/WagonVisualization';
+import HistoriqueChargement from './pages/Chargement/HistoriqueChargement';
+import ChargementContent from './pages/ChargementContent';
+import TrieursTable from './pages/TrieursTable';
+import EnfourneurTable from './pages/EnfourneurTable';
+import AffectationContent from './pages/AffectationContent';
+import JeuneFour from './pages/jeuneFour';
 function App() {
   return (
     <AuthProvider>
@@ -47,6 +54,13 @@ function App() {
         <Route path="/settings/familles" element={<Familles />} />
         <Route path="/settings/familles/add" element={<FamilleAdd />} />
         <Route path="/settings/familles/edit/:id" element={< FamilleEdit />}/>
+        <Route path="/WagonVisualization" element={<WagonVisualization />} />
+        <Route path="/historique" element={<HistoriqueChargement/>}/>
+        <Route path="/ChargementContent" element={<ChargementContent/>}/>
+        <Route path= "/team/trieurs" element={<TrieursTable/>}/>
+        <Route path= "/team/enfourneur" element={<EnfourneurTable/>}/>
+        <Route path="/affectation" element={<AffectationContent/>}/>
+        <Route path="/jeuneFour" element={<JeuneFour />} />
       </Routes>
     </AuthProvider>
   );

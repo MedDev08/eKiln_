@@ -13,8 +13,9 @@ export const AuthProvider = ({ children }) => {
     // Vérifier si l'utilisateur est déjà connecté
     const checkLoggedIn = async () => {
       try {
-        const userData = await authService.getCurrentUser()
-        setUser(userData)
+        const userData = await authService.getCurrentUser();
+        console.log('Utilisateur connecté:', userData);
+        setUser(userData);
       } catch (error) {
         console.error('Utilisateur non connecté', error)
       } finally {

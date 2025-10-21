@@ -8,41 +8,54 @@ use Carbon\Carbon;
 
 class Chargement extends Model
 {
-    protected $fillable = ['id_user', 'id_wagon', 'id_four','statut','datetime_sortieEstime'];
+    protected $fillable = ['id_user', 'id_wagon', 'id_four', 'statut', 'datetime_sortieEstime'];
     protected static function booted()
-{
-    static::creating(function ($chargement) {
-        $chargement->statut = 'en attente';
-        $chargement->datetime_chargement = now();
+    {
+        static::creating(function ($chargement) {
+            $chargement->statut = 'en attente';
+            $chargement->datetime_chargement = now();
 
-        if ($chargement->four) {
-            // Utilisation directe des secondes (nouveau format)
-            $dureeSecondes = $chargement->four->duree_cuisson;
-            $chargement->datetime_sortieEstime = Carbon::now()->addSeconds($dureeSecondes);
+            if ($chargement->four) {
+                // Utilisation directe des secondes (nouveau format)
+                $dureeSecondes = $chargement->four->duree_cuisson;
+                $chargement->datetime_sortieEstime = Carbon::now()->addSeconds($dureeSecondes);
 
-            // Mettre à jour le statut du wagon
-            $wagon = Wagon::find($chargement->id_wagon);
-            if ($wagon) {
-                $wagon->statut = 'en cuisson';
-                $wagon->save();
+                // Mettre à jour le statut du wagon
+                $wagon = Wagon::find($chargement->id_wagon);
+                if ($wagon) {
+                    $wagon->statut = 'en cuisson';
+                    $wagon->save();
+                }
             }
-        }
-    });
+        });
 
-    // Nouveau : Lors de la mise à jour
-    static::updated(function ($chargement) {
-        if ($chargement->statut === 'sorti') {
-            $wagon = Wagon::find($chargement->id_wagon);
-            if ($wagon) {
-                $wagon->statut = 'disponible';
-                $wagon->save();
+        // Nouveau : Lors de la mise à jour
+        static::updated(function ($chargement) {
+            if ($chargement->statut === 'sorti') {
+                $wagon = Wagon::find($chargement->id_wagon);
+                if ($wagon) {
+                    $wagon->statut = 'disponible';
+                    $wagon->save();
+                }
             }
-        }
-    });
-}    public function user() { return $this->belongsTo(User::class, 'id_user'); }
-    public function four() { return $this->belongsTo(Four::class, 'id_four'); }
-    public function wagon() { return $this->belongsTo(Wagon::class, 'id_wagon'); }
-    public function details() { return $this->hasMany(DetailChargement::class, 'id_chargement'); }
+        });
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user');
+    }
+    public function four()
+    {
+        return $this->belongsTo(Four::class, 'id_four');
+    }
+    public function wagon()
+    {
+        return $this->belongsTo(Wagon::class, 'id_wagon');
+    }
+    public function details()
+    {
+        return $this->hasMany(DetailChargement::class, 'id_chargement');
+    }
     protected $primaryKey = 'id';
     public $incrementing = true;
 }

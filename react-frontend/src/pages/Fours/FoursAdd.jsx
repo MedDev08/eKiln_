@@ -22,7 +22,7 @@ import {
   Paper
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import AddIcon from '@mui/icons-material/Add';
@@ -140,7 +140,7 @@ const FoursAdd = () => {
   };
 
   return (
-    <Sidebar initialPath="/settings/fours/add">
+    <SidebarChef initialPath="/settings/fours/add">
       <Box
         component="form"
         onSubmit={handleSubmit}
@@ -283,7 +283,7 @@ const FoursAdd = () => {
           </Button>
         </Box>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 };
 

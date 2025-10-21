@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Box, Grid, Card, CardContent, Container, CircularProgress } from '@mui/material';
 import axios from 'axios';
-import Sidebar from '../components/layout/sidebar.jsx';
+import SidebarChef from '../components/layout/SidebarChef.jsx';
 import TotalPiecesChart from '../components/layout/TotalPiecesChart';
 import WagonsRecap from "./Chargement/WagonsRecap.jsx";
 import ShiftChart from '../components/layout/shiftChart.jsx';
@@ -237,9 +237,9 @@ const DashboardContent = () => {
 
 const Dashboard = () => {
   return (
-    <Sidebar initialPath="/dashboard">
+    <SidebarChef initialPath="/dashboard">
       <DashboardContent />
-    </Sidebar>
+    </SidebarChef>
   );
 };
 

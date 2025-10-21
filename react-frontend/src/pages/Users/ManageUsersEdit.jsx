@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -168,16 +168,16 @@ export default function ManageUsersEdit() {
 
   if (loading.form) {
     return (
-      <Sidebar initialPath="/manage-users/edit">
+      <SidebarChef initialPath="/manage-users/edit">
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <CircularProgress />
         </Box>
-      </Sidebar>
+      </SidebarChef>
     );
   }
 
   return (
-    <Sidebar initialPath="/manage-users/edit">
+    <SidebarChef initialPath="/manage-users/edit">
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
         <Typography
           variant="h4"
@@ -304,6 +304,6 @@ export default function ManageUsersEdit() {
           {loading.submit ? <CircularProgress size={24} /> : 'Update User'}
         </Button>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 }

@@ -520,6 +520,7 @@ const DashboardContent = () => {
   
 
   return (
+   
     <Box sx={{ p: 3 }}>
       {/* Header amélioré */}
       <Box sx={{ 
@@ -612,6 +613,7 @@ const DashboardContent = () => {
         </CardContent>
       </Card>
     </Box>
+  
   );
 };
 export default DashboardContent;

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../../components/layout/sidebar';
+import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -25,7 +25,8 @@ const ROLES = [
   'admin',
   'chef d\'equipe',
   'trieur',
-  'enfourneur'
+  'enfourneur',
+  'jeune four'
 ];
 
 export default function ManageUsersAdd() {
@@ -131,7 +132,7 @@ export default function ManageUsersAdd() {
   };
 
   return (
-    <Sidebar initialPath="/manage-users/add">
+    <SidebarChef initialPath="/manage-users/add">
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
         <Typography
           variant="h4"
@@ -258,6 +259,6 @@ export default function ManageUsersAdd() {
           {loading ? <CircularProgress size={24} /> : 'Create User'}
         </Button>
       </Box>
-    </Sidebar>
+    </SidebarChef>
   );
 }

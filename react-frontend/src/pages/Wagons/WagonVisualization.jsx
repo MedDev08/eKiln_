@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../components/layout/FourBoxViewer.css';
+import SidebarChef from '../../components/layout/SidebarChef';
 import {
     Box,
     Typography,
@@ -306,6 +307,7 @@ const WagonVisualization = () => {
     );
 
     return (
+    <SidebarChef>
         <Box m="30px">
             <Header
                 title="VISUALISATION DES FOURS"
@@ -387,6 +389,7 @@ const WagonVisualization = () => {
                 </Fade>
             </Modal>
         </Box>
+    </SidebarChef>
     );
 };
 

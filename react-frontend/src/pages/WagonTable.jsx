@@ -24,6 +24,8 @@ import TextField from '@mui/material/TextField';
 import Modal from '@mui/material/Modal';
 import CloseIcon from '@mui/icons-material/Close';
 import CircularProgress from '@mui/material/CircularProgress';
+import FlagIcon from '@mui/icons-material/Flag';
+
 // Component: WagonTable
 const WagonTable = ({ fourNum, id_four }) => {
   const [selectedWagon, setSelectedWagon] = useState(null);
@@ -56,7 +58,7 @@ const FourTrieursNeeded = ({ data, four, fullWidth }) => {
       </Typography>
       
       <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
+       <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>Famille</TableCell>
@@ -67,34 +69,48 @@ const FourTrieursNeeded = ({ data, four, fullWidth }) => {
           <TableBody>
             {data.familles
               .sort((a, b) => b.total_pieces - a.total_pieces) // tri décroissant
-              .map((famille, index) => (
-              <TableRow key={index}>
-                <TableCell>{famille.nom_famille}</TableCell>
-                <TableCell align="right">{famille.total_pieces}</TableCell>
-                <TableCell align="right">{famille.trieurs_needed}</TableCell>
-              </TableRow>
-            ))}
+              .map((famille, index) => {
+                const isRed = ["balaste", "couvercles"].includes(famille.nom_famille?.toLowerCase());
+
+                return (
+                  <TableRow key={index}>
+                    <TableCell sx={{ color: isRed ? "red" : "inherit" }}>
+                      {famille.nom_famille}
+                    </TableCell>
+                    <TableCell align="right" sx={{ color: isRed ? "red" : "inherit" }}>
+                      {famille.total_pieces}
+                    </TableCell>
+                    <TableCell align="right" sx={{ color: isRed ? "red" : "inherit" }}>
+                      {famille.trieurs_needed}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
       </TableContainer>
     </Box>
   );
 };
-  const fetchWagonDetails = async (id) => {
-    try {
+    const getWagonDetails = async (id) => {
+      try {
         const token = localStorage.getItem('token');
         const response = await axios.get(
-            `http://localhost:8000/api/chargements/${id}/details-popup`,
-            { headers: { Authorization: `Bearer ${token}` } }
+          `http://localhost:8000/api/chargements/${id}/details-popup`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        
-        if (response.data.success) {
-            setSelectedWagonDetails(response.data.data);
-            setShowWagonDetailsModal(true);
-        }
-    } catch (error) {
-        console.error("Error fetching wagon details:", error);
-    }
+        return response.data.success ? response.data.data : null;
+      } catch (error) {
+        console.error("Erreur fetching wagon details:", error);
+        return null;
+      }
+    };
+  const fetchWagonDetails = async (id) => {
+    const details = await getWagonDetails(id);
+  if (details) {
+    setSelectedWagonDetails(details);
+    setShowWagonDetailsModal(true);
+  }
   };
 
   const fetchData = async (startFromWagon = null, count = wagonCount) => {
@@ -113,8 +129,21 @@ const FourTrieursNeeded = ({ data, four, fullWidth }) => {
           headers: { 'Authorization': `Bearer ${token}` },
           params: params
       });
-      //console.log("Wagons Response:", wagonsResponse.data);
-      setWagonsData(wagonsResponse.data.chargements);
+        const wagons = wagonsResponse.data.chargements;
+
+    // Vérifier "balaste" pour chaque wagon et  Ajouter "containsBalsate" pour chaque wagon
+    const wagonsWithDetails = await Promise.all(
+      wagons.map(async (wagon) => {
+        const details = await getWagonDetails(wagon.id);
+        const containsBalsate = details?.details?.some(
+          d => d.nom_famille?.trim().toLowerCase() === 'balaste'
+        ) || false;
+        return { ...wagon, containsBalsate };
+      })
+    );
+    setWagonsData(wagonsWithDetails);
+      console.log("Wagons Response:", wagonsResponse.data);
+      // setWagonsData(wagonsResponse.data.chargements);
       setCurrentInterval(`${wagonsResponse.data.current_interval.start} - ${wagonsResponse.data.current_interval.end}`);
       setTotalCount(wagonsResponse.data.total_count || wagonsResponse.data.chargements.length);
 
@@ -184,6 +213,29 @@ const FourTrieursNeeded = ({ data, four, fullWidth }) => {
     }
   };
   const columns=[
+      {
+        field: 'containsBalsate',
+        headerName: 'Balaste',
+        flex: 1,
+        renderCell: (params) => {
+          if (!params.row.containsBalsate) return null; // si pas de balaste, rien
+          return (
+            <Box
+               sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 24,
+                height: 24,
+                color: 'red', // couleur du drapeau
+                fontSize: 20,
+              }}
+            >
+              <FlagIcon fontSize="small" />
+            </Box>
+          );
+        },
+       },
       { field: 'wagon_num', headerName: 'N° wagon', valueGetter: params => params || 'N/A', flex: 1 },
       { field: 'wagon_type', headerName: 'Type', valueGetter: params => params || 'N/A', flex: 1 },
       { field: 'four_num', headerName: 'Four', valueGetter: params => params || 'N/A', flex: 1 },

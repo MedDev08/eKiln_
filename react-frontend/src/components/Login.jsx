@@ -39,7 +39,7 @@ function Login() {
       // Redirection basée sur le rôle
       switch (user.role) {
         case "admin":
-          navigate("/dashboard");
+          navigate("/chefDashboard");
           break;
         case "chef d'equipe":
           navigate("/chefDashboard");

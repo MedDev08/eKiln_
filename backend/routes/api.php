@@ -148,4 +148,11 @@ Route::middleware('auth:api')->group(function () {
 });
 Route::get('/total-pieces-by-shift', [ChargementController::class, 'getTotalPiecesByShift'])->middleware('auth:sanctum');
 Route::put('/chargements/{chargement}', [ChargementController::class, 'update']);
+// Route::middleware('auth:sanctum')->group(function () {
+//     // ... autres routes
+
+Route::get('/chargements/en-attente', [ChargementController::class, 'getWagonsEnAttente']);
 Route::post('/chargements/valider/{id}', [ChargementController::class, 'valider']);
+Route::get('/chargements/last-date/{idFour}', [ChargementController::class, 'getLastDateEntrer']);
+
+// });

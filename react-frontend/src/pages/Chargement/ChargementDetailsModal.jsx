@@ -26,16 +26,68 @@ export default function ChargementDetailsModal({
   onValidate,
   getStatusColor,
 }) {
-  // Initialisation de la date de validation
- const [validationDate, setValidationDate] = useState(new Date());
+ // --- Ici on définit la fonction pour calculer la date initiale ---
+const getInitialDate = async () => {
+  if (!chargement) return new Date();
 
-  // Synchroniser validationDate si le chargement change
- useEffect(() => {
-  if (chargement?.date_entrer) {
-    setValidationDate(new Date(chargement.date_entrer));
-  } else {
-    setValidationDate(new Date());
+  //  si la date d’entrée existe, on l’utilise immédiatement
+  if (chargement.date_entrer) {
+    return new Date(chargement.date_entrer.replace(" ", "T"));
   }
+
+  try {
+    const token = localStorage.getItem("token");
+
+    //  récupérer la dernière date d’entrée pour ce four
+    const response = await fetch(
+      `http://127.0.0.1:8000/api/chargements/last-date/${chargement.id_four}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await response.json();
+
+    let baseDate;
+
+    if (data?.date_entrer) {
+      //  Si une dernière date existe, on part de là
+      const safeDateStr = data.date_entrer.replace(" ", "T");
+      baseDate = new Date(safeDateStr);
+    } else {
+      //  Sinon, on prend la date actuelle
+      baseDate = new Date();
+    }
+
+    //  Ajouter le décalage selon le four
+    if (chargement.id_four === 6)
+      baseDate = new Date(baseDate.getTime() + 16 * 60 * 1000);
+    else if (chargement.id_four === 7)
+      baseDate = new Date(baseDate.getTime() + 34 * 60 * 1000);
+
+    return baseDate;
+  } catch (error) {
+    console.error("Erreur récupération dernière date :", error);
+    // En cas d'erreur, on retourne une date actuelle + décalage
+    let fallbackDate = new Date();
+    // if (chargement.id_four === 6)
+    //   fallbackDate = new Date(fallbackDate.getTime() + 16 * 60 * 1000);
+    // else if (chargement.id_four === 7)
+    //   fallbackDate = new Date(fallbackDate.getTime() + 34 * 60 * 1000);
+    return fallbackDate;
+  }
+};
+
+// --- Initialiser le state ---
+const [validationDate, setValidationDate] = useState(null);
+
+// --- Charger la date initiale une fois que le chargement est disponible ---
+useEffect(() => {
+  if (!chargement) return;
+
+  const initDate = async () => {
+    const date = await getInitialDate();
+    setValidationDate(date);
+  };
+
+  initDate();
 }, [chargement]);
 
   // Fonction pour changer uniquement l'heure et les minutes
@@ -88,6 +140,10 @@ export default function ChargementDetailsModal({
           <Typography variant="subtitle2">Four :</Typography>
           <Typography>{chargement.four?.num_four || "N/A"}</Typography>
         </Grid>
+         <Grid item xs={6}>
+          <Typography variant="subtitle2">Total pièces :</Typography>
+          <Typography>{chargement.details.reduce((sum, d) => sum + d.quantite, 0)}</Typography>
+        </Grid>
         <Grid item xs={6}>
           <Typography variant="subtitle2">Date chargement :</Typography>
           <Typography>{formatDate(chargement.datetime_chargement)}</Typography>
@@ -103,6 +159,10 @@ export default function ChargementDetailsModal({
          <Grid item xs={6}>
           <Typography variant="subtitle2"> Date sortie estimée :</Typography>
           <Typography>{formatDate(chargement.datetime_sortieEstime)}</Typography>
+        </Grid>
+          <Grid item xs={6}>
+          <Typography variant="subtitle2">Matricule :</Typography>
+          <Typography>{chargement.user?.matricule || "-"}</Typography>
         </Grid>
       </Grid>
 
@@ -145,7 +205,7 @@ export default function ChargementDetailsModal({
       <Typography sx={{ mb: 1 }}>Heure d’entrée :</Typography>
       <TextField
         type="time"
-        value={format(validationDate, "HH:mm")}
+        value={validationDate ? format(validationDate, "HH:mm") : ""}
         onChange={handleChangeTime}
         fullWidth
       />

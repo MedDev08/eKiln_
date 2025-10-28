@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Chargement;
 use App\Models\DetailChargement;
 use App\Models\Wagon;
+use App\Models\Four;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
@@ -462,7 +463,7 @@ class ChargementController extends Controller
     {
         try {
             $user = Auth::user();
-            $perPage = $request->input('per_page', 10);
+            $perPage = $request->input('per_page', 50);
             $search = $request->input('search', '');
             $dateFrom = $request->input('date_from');
             $dateTo = $request->input('date_to');
@@ -1189,10 +1190,10 @@ class ChargementController extends Controller
     }
     public function update(Request $request, Chargement $chargement)
     {
-        //   $changed = false;
         $validated = $request->validate([
             'id_wagon' => 'required|exists:wagons,id_wagon',
             'id_four'  => 'required|exists:fours,id_four',
+            'id_user'  => 'required|exists:users,id_user',
             'datetime_chargement' => 'required|date',
             'statut' => 'required|string',
             'familles' => 'sometimes|array',
@@ -1249,19 +1250,9 @@ class ChargementController extends Controller
                     ]);
                 }
             }
-            //     // Comparer les champs simples
-            // if ($chargement->id_wagon != $validated['id_wagon'] ||
-            //     $chargement->id_four != $validated['id_four'] ||
-            //     $chargement->datetime_chargement != $validated['datetime_chargement'] ||
-            //     $chargement->statut != $validated['statut']) {
-            //     $changed = true;
-            //     return response()->json([
-            //     'message' => 'Chargement mis à jour avec succès',
-            //     ]);
-            // }
             return response()->json([
                 'message' => 'Chargement mis à jour avec succès',
-                'data' => $chargement->load('details.famille', 'wagon', 'four')
+                'data' => $chargement->load('details.famille', 'wagon', 'four', 'user')
             ]);
         }
     }
@@ -1291,6 +1282,63 @@ class ChargementController extends Controller
             return $chargementTime->copy()->add($interval);
         }
     }
+    public function getWagonsEnAttente()
+    {
+        try {
+            // On récupère tout ce qui est "en attente" 
+            $chargementsEnAttente = Chargement::with(['user', 'wagon', 'four', 'details.famille'])
+                ->where('statut', 'en attente')
+                ->orderBy('datetime_chargement', 'asc')
+                ->get();
+            //  Récupérer les 10 derniers en cuisson pour chaque four
+            $foursIds = Chargement::distinct()->pluck('id_four');
+            $chargementsEnCuisson = collect();
+            //  Pour chaque four, on récupère les 10 derniers chargements en cuisson
+            foreach ($foursIds as $idFour) {
+                $last10 = Chargement::with(['user', 'wagon', 'four', 'details.famille'])
+                    ->where('statut', 'en cuisson')
+                    ->where('id_four', $idFour)
+                    ->orderBy('date_entrer', 'desc')
+                    ->limit(10)
+                    ->get();
+
+                $chargementsEnCuisson = $chargementsEnCuisson->concat($last10);
+            }
+
+            //  Fusionner les deux collections
+            $chargements = $chargementsEnAttente->merge($chargementsEnCuisson);
+            return response()->json([
+                'success' => true,
+                'data' => $chargements
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des wagons en attente',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function getLastDateEntrer($idFour)
+    {
+        try {
+            $lastChargement = Chargement::where('id_four', $idFour)
+                ->whereNotNull('date_entrer')
+                ->orderBy('date_entrer', 'desc')
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'date_entrer' => $lastChargement ? $lastChargement->date_entrer : null
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération de la dernière date d’entrée',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function valider($id, Request $request)
     {
         $chargement = Chargement::find($id);
@@ -1310,7 +1358,6 @@ class ChargementController extends Controller
         $chargement->date_action = now();
         $chargement->statut = 'en cuisson';
         $chargement->save();
-
         return response()->json([
             'message' => 'Chargement validé avec succès',
             'data' => $chargement

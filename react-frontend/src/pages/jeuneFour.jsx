@@ -14,51 +14,77 @@ import {
   Button,
   Chip,
   Modal,
+  Grid,
+  Tabs,
+  Tab,
+  Badge,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import LogoutIcon from "@mui/icons-material/Logout";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import ChargementDetailsModal from "./Chargement/ChargementDetailsModal";
 import SidebarChef from "../components/layout/SidebarChef";
 
 function JeuneFour() {
-  const [chargements, setChargements] = useState([]);
+  const [wagonsParFour, setWagonsParFour] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userShift, setUserShift] = useState(null);
+  const [selectedFour, setSelectedFour] = useState(null);
 
-  // Modal
   const [openModal, setOpenModal] = useState(false);
   const [selectedChargement, setSelectedChargement] = useState(null);
 
-  const fetchChargements = async () => {
+  //  Fonction de récupération des wagons
+  const fetchWagons = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
+
       const response = await axios.get(
-        "http://localhost:8000/api/chargements/historique",
+        "http://localhost:8000/api/chargements/en-attente",
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setChargements(response.data.data.data);
+
+      // On récupère directement la liste renvoyée par Laravel
+      const wagons = response.data.data || [];
+      //  Regrouper par numéro de four
+      const grouped = {};
+      wagons.forEach((c) => {
+        const numFour = c.four?.num_four?.toString() || `Four ${c.id_four}`;
+
+        if (!grouped[numFour]) grouped[numFour] = { enAttente: [], enCuisson: [] };
+       
+        if (c.statut === "en attente") grouped[numFour].enAttente.push(c);
+        else
+          //  if (c.statut === "en cuisson" && c.date_entrer)
+          grouped[numFour].enCuisson.push(c);
+      });
+      setWagonsParFour(grouped);
+
+      // Sélectionner le premier four par défaut
+      if (!selectedFour && Object.keys(grouped).length > 0) {
+        setSelectedFour(Object.keys(grouped)[0]);
+      }
     } catch (err) {
-      console.error("Erreur:", err);
-      setError("Erreur lors du chargement de l'historique");
+      console.error(err);
+      setError("Erreur lors du chargement des wagons");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user?.role === "jeune four") setUserShift(user.shift);
+    fetchWagons();
+    const interval = setInterval(fetchWagons, 60000); // refresh toutes les 60s
+    return () => clearInterval(interval);
   }, []);
+  //  Formatage des dates
+  const formatDate = (dateString) =>
+    dateString
+      ? format(parseISO(dateString), "dd/MM/yyyy HH:mm", { locale: fr })
+      : "-";
 
-  useEffect(() => {
-    fetchChargements();
-  }, [userShift]);
-const formatDate = (dateString) => format(parseISO(dateString),
- "dd/MM/yyyy HH:mm", { locale: fr });
+  //  Couleur selon le statut
   const getStatusColor = (status) => {
     switch (status) {
       case "en attente":
@@ -72,67 +98,57 @@ const formatDate = (dateString) => format(parseISO(dateString),
     }
   };
 
+  //  Ouvrir modal de validation
   const handleOpenModal = (chargement) => {
     setSelectedChargement(chargement);
     setOpenModal(true);
   };
 
-  const handleSaveValidation = async (validationDate) => {
-    try {
-      const token = localStorage.getItem("token");
-      const formattedDate = format(validationDate, "yyyy-MM-dd HH:mm:ss");
-      const response = await axios.post(
-        `http://localhost:8000/api/chargements/valider/${selectedChargement.id}`,
-        { date_entrer: formattedDate },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  //  Sauvegarde validation (date d’entrée)
+ const handleSaveValidation = async (validationDate) => {
+  try {
+    const token = localStorage.getItem("token");
+    const formattedDate = format(validationDate, "yyyy-MM-dd HH:mm:ss");
 
-      const updatedChargement = response.data.data;
-      setChargements((prev) =>
-        prev.map((c) =>
-          c.id === selectedChargement.id
-            ? { ...c, ...updatedChargement, date_validation: validationDate }
-            : c
-        )
-      );
-      setOpenModal(false);
-      setSelectedChargement(null);
-    } catch (error) {
-      console.error("Erreur validation:", error.response?.data || error.message);
-      alert("Erreur: " + JSON.stringify(error.response?.data || error.message));
-    }
-  };
+     await axios.post(
+      `http://localhost:8000/api/chargements/valider/${selectedChargement.id}`,
+      { date_entrer: formattedDate },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-  const renderTable = (data, title, showValidate = false, showEdit = false) => (
-    <Box sx={{ mt: 4 }}>
-      <Typography variant="h6" gutterBottom>
-        {title}
-      </Typography>
-      <Paper>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Date Chargement</TableCell>
-                <TableCell>Wagon</TableCell>
-                <TableCell>Four</TableCell>
-                <TableCell>Total pièces</TableCell>
-                <TableCell>Statut</TableCell>
-                <TableCell> Date sortie estimée</TableCell>
-                <TableCell> Matricule</TableCell>
-                {showEdit && <TableCell>Date Entrer</TableCell>}
-                {(showValidate || showEdit) && <TableCell>Actions</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.map((c) => (
+    // Fermer la modal d'abord
+    setOpenModal(false);
+    setSelectedChargement(null);
+
+    //  Recharge toutes les données pour mettre à jour wagon et user immédiatement
+    await fetchWagons();
+
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+  }
+};
+  //  Rendu du tableau
+  const renderTable = (chargements, validated = false) => (
+    <Paper sx={{ mt: 2 }}>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Date Chargement</TableCell>
+              <TableCell>Wagon</TableCell>
+              <TableCell>Four</TableCell>
+              <TableCell>Statut</TableCell>
+              {validated && <TableCell>Date Entrée</TableCell>}
+               <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {chargements.length > 0 ? (
+              chargements.map((c) => (
                 <TableRow key={c.id}>
-                  <TableCell>{c.datetime_chargement ? formatDate(c.datetime_chargement) :'N/A'}</TableCell>
-                  <TableCell>{c.wagon?.num_wagon || "N/A"}</TableCell>
-                  <TableCell>{c.four?.num_four || "N/A"}</TableCell>
-                  <TableCell>
-                    {c.details.reduce((sum, d) => sum + d.quantite, 0)}
-                  </TableCell>
+                  <TableCell>{formatDate(c.datetime_chargement)}</TableCell>
+                  <TableCell>{c.wagon?.num_wagon || "-"}</TableCell>
+                  <TableCell>Four{c.four?.num_four || "-"}</TableCell>
                   <TableCell>
                     <Chip
                       label={c.statut}
@@ -140,82 +156,216 @@ const formatDate = (dateString) => format(parseISO(dateString),
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>{c.datetime_sortieEstime ? formatDate(c.datetime_sortieEstime): 'N/A'}</TableCell>
-                  <TableCell>  {c.user?.matricule || "-"}</TableCell>
-                  {showEdit && ( <TableCell>{c.date_entrer ? formatDate(c.date_entrer) :'-'}</TableCell>)}
-                 {(showValidate || showEdit) && (
+                  {validated && (
+                    <TableCell>{formatDate(c.date_entrer)}</TableCell>
+                  )}
                   <TableCell>
-                    {showValidate && (
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color="success"
-                        onClick={() => handleOpenModal(c)}
-                      >
-                        Valider
-                      </Button>
-                    )}
-                    {showEdit && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="primary"
-                        onClick={() => handleOpenModal(c)}
-                        sx={{ ml: 1 }}
-                      >
-                        Éditer
-                      </Button>
-                    )}
-                  </TableCell>
-                )}
+                  {validated ? (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="primary"
+                      onClick={() => handleOpenModal(c)}
+                    >
+                      Éditer
+                    </Button>
+                  ) : (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="success"
+                      onClick={() => handleOpenModal(c)}
+                    >
+                      Valider
+                    </Button>
+                  )}
+                </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-    </Box>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  Aucun chargement trouvé
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
   );
 
- const chargementsValides = chargements
-  .filter((c) => c.statut === "en cuisson")
-  .sort((a, b) => new Date(b.date_entrer) - new Date(a.date_entrer));
-  const chargementsEnCours = chargements.filter((c) => c.statut === "en attente");
-
+  //  Rendu principal
   return (
     <SidebarChef>
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Chargements de mon shift
-      </Typography>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Wagons par four
+        </Typography>
 
-      <Button
-        variant="contained"
-        startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
-        onClick={fetchChargements}
-        disabled={loading}
-        sx={{ mb: 2 }}
-      >
-        {loading ? "Chargement..." : "Actualiser"}
-      </Button>
+        {/* Onglets des fours */}
+      <Tabs
+      value={selectedFour}
+        // onChange={(e, newValue) => setSelectedFour(newValue)}
+      onChange={(e, newValue) => {
+        setSelectedFour(newValue); // change de four
+        setLoading(true);          // montrer le loader
+        // On attend 50ms pour que le loader apparaisse avant de fetcher
+        setTimeout(() => {
+          fetchWagons();
+        }, 50);
+      }}
+      sx={{ mb: 2 }}
+      variant="scrollable"
+      scrollButtons="auto"
+    >
+      {Object.keys(wagonsParFour).map((numFour) => {
+        const count = wagonsParFour[numFour]?.enAttente?.length || 0;
 
-      {error && <Typography color="error">{error}</Typography>}
-
-      {renderTable(chargementsEnCours, "Chargements en cours", true)}
-      {renderTable(chargementsValides, "Chargements validés",false, true)}
-
-      {/* --- Modal --- */}
-      {selectedChargement && (
-        <Modal open={openModal} onClose={() => setOpenModal(false)}>
-          <ChargementDetailsModal
-            chargement={selectedChargement}
-            onClose={() => setOpenModal(false)}
-            onValidate={handleSaveValidation}
-            getStatusColor={getStatusColor}
+        return (
+          <Tab
+            key={numFour}
+            value={numFour}
+            sx={{
+              border: "1px solid #ccc",
+              borderRadius: 2,
+              textTransform: "none",
+              marginRight: 1,
+              "&.Mui-selected": {
+                backgroundColor: "#1976d2",
+                color: "#fff",
+                fontWeight: "bold",
+              },
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+              paddingTop: 2,
+              paddingBottom: 2,
+            }}
+            label={
+              <Box sx={{ position: "relative", width: "100%" }}>
+               <Badge
+                  badgeContent={count}
+                  color="warning"
+                  max={999}
+                  sx={{
+                    position: "absolute",
+                    top: -6,
+                    right: 5,
+                  }}
+                >
+               </Badge>
+               {/* <Box
+                  sx={{
+                    position: "absolute",
+                    top: -17,
+                    left: 48,
+                    width: 24,
+                    height: 24,
+                    backgroundColor: (theme) => theme.palette.warning.main, // couleur warning
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                    fontWeight: "bold",
+                    borderRadius: 1, // coins légèrement arrondis pour carré
+                  }}
+                >
+                  {count}
+                </Box> */}
+                <span>Four {numFour}</span>
+              </Box>
+            } 
           />
-        </Modal>
+        );
+      })}
+    </Tabs>
+        {/* Bouton actualiser */}
+        <Button
+          variant="contained"
+          startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+          onClick={fetchWagons}
+          disabled={loading}
+          sx={{ mb: 2 }}
+        >
+          {loading ? "Chargement..." : "Actualiser"}
+        </Button>
+
+        {error && <Typography color="error">{error}</Typography>}
+
+       {selectedFour && wagonsParFour[selectedFour] ? (
+  <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+    <Box sx={{ flex: 1 }}>
+      {/* Tables côte à côte avec hauteur fixe et scroll */}
+      {loading ? (
+        <Box
+          sx={{
+            flex: 1,
+            height: 450,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+          {/* Table En attente */}
+          <Box
+            sx={{
+              flex: 1,
+              height: 450,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              En attente
+            </Typography>
+            <Box sx={{ flex: 1, overflowY: "auto" }}>
+              {renderTable(wagonsParFour[selectedFour].enAttente || [], false)}
+            </Box>
+          </Box>
+          {/* Table En cuisson */}
+          <Box
+            sx={{
+              flex: 1,
+              height: 450,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              En cuisson
+            </Typography>
+            <Box sx={{ flex: 1, overflowY: "auto" }}>
+              {renderTable(wagonsParFour[selectedFour].enCuisson || [], true)}
+            </Box>
+          </Box>
+        </Box>
       )}
     </Box>
+  </Box>
+) : (
+  <Typography>Aucun wagon trouvé pour ce four.</Typography>
+)}
+
+
+        {selectedChargement && (
+          <Modal open={openModal} onClose={() => setOpenModal(false)}>
+            <ChargementDetailsModal
+              chargement={selectedChargement}
+              onClose={() => setOpenModal(false)}
+              onValidate={handleSaveValidation}
+              getStatusColor={getStatusColor}
+            />
+          </Modal>
+        )}
+      </Box>
     </SidebarChef>
   );
 }

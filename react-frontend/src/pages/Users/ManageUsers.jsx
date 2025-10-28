@@ -106,7 +106,7 @@ export default function EnhancedDataGrid() {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 100,
+      width: 250,
       sortable: false,
       renderCell: (params) => (
         <>

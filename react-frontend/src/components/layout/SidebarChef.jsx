@@ -447,7 +447,6 @@ const SidebarChef = ({ children, window }) => {
   const user = JSON.parse(localStorage.getItem('user'));
   const role = user?.role?.toLowerCase();
    if (role === "chef d'equipe" || role === 'chef') {
-     console.log("C'est un chef ✅");
     return (
       <AppProvider
         navigation={NAV_CHEF}
@@ -466,7 +465,6 @@ const SidebarChef = ({ children, window }) => {
     );
   }
     if (role === "jeune four" || role === 'jeune') {
-     console.log("C'est un jeune four ✅");
     return (
       <AppProvider
         navigation={NAV_JeuneFour}

@@ -27,7 +27,8 @@ import {
   MenuItem, Dialog,          
   DialogTitle,      
   DialogContent,   
-  DialogActions,    
+  DialogActions, 
+  FormControl   
 } from '@mui/material';
 import { 
   Search as SearchIcon, 
@@ -66,6 +67,7 @@ const HistoriqueChargement = () => {
   const [loadingSubmit, setLoadingSubmit] = useState(false); // pour l'édition
   // null = tri par défaut, 'desc' = décroissant, 'asc' = croissant
   const [piecesSortOrder, setPiecesSortOrder] = useState(null);
+  const [users, setUsers] = useState([]);
   const [filters, setFilters] = useState({
     datetime_chargement: '',
     wagon: '',
@@ -80,6 +82,7 @@ const HistoriqueChargement = () => {
   const [editFormData, setEditFormData] = useState({
     wagon_id: "",
     four_id: "",
+    user_id: "",
     datetime_chargement: "",
     statut: "",
     familles: [] // [{ id_famille, quantite }]
@@ -89,6 +92,7 @@ const HistoriqueChargement = () => {
     setEditFormData({
       wagon_id: chargement.wagon?.id_wagon || "",
       four_id: chargement.four?.id_four || "",
+      user_id: chargement.user?.id_user || "",
       datetime_chargement: chargement.datetime_chargement?.slice(0, 10) || "",
       statut: chargement.statut || "",
       familles: chargement.details.map(d => ({
@@ -129,14 +133,18 @@ const HistoriqueChargement = () => {
 const fetchInitialData = async () => {
   try {
     const token = localStorage.getItem("token");
-    const [famillesRes, foursRes, wagonsRes] = await Promise.all([
+    const [famillesRes, foursRes, wagonsRes,usersRes] = await Promise.all([
       axios.get("http://localhost:8000/api/familles", { headers: { Authorization: `Bearer ${token}` } }),
       axios.get("http://localhost:8000/api/fours", { headers: { Authorization: `Bearer ${token}` } }),
       axios.get("http://localhost:8000/api/wagons1", { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get("http://localhost:8000/api/users", { headers: { Authorization: `Bearer ${token}` } }) // utilisateurs
+
     ]);
     setFamilles(famillesRes.data);
     setFours(foursRes.data);
     setWagons(wagonsRes.data.data);
+    setUsers(usersRes.data.data);
+      console.log("users",usersRes.data.data);
   } catch (err) {
     console.error("Erreur fetchInitialData :", err);
   }
@@ -157,6 +165,7 @@ const handleEditSubmit = async (e) => {
     const payload = {
       id_wagon: editFormData.wagon_id,
       id_four: editFormData.four_id,
+      id_user: editFormData.user_id,
       datetime_chargement: editFormData.datetime_chargement,
       statut: editFormData.statut,
      familles: editFormData.familles.map(f => ({
@@ -627,6 +636,21 @@ const handleFilterChange = (field, value) => {
                       </MenuItem>
                     ))}
                   </Select>
+                 <Autocomplete
+                    options={users.filter(u => u.Role.toLowerCase() === "enfourneur")} 
+                    getOptionLabel={(u) => `(${u.Matricule}) ${u.Nom} ${u.Prenom}`}
+                    value={users.find(u => u.id === editFormData.user_id) || null}
+                    onChange={(e, newValue) =>
+                      setEditFormData({
+                        ...editFormData,
+                        user_id: newValue ? newValue.id : '',
+                      })
+                    }
+                    renderInput={(params) => (
+                      <TextField {...params} label="Utilisateur (Enfourneur)" required margin="normal" />
+                    )}
+                  />
+
                  {/* Familles */}
                   <Typography variant="subtitle1" sx={{ mb: 2 }}>Familles et quantités</Typography>
                   <Box sx={{ mt: 1 }}> {/* juste un petit espace */}

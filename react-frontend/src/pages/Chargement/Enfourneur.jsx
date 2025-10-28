@@ -203,11 +203,22 @@ function Enfourneur() {
 
     const chargements = response.data;
 
-    const totalPieces = chargements.reduce((sum, chargement) => {
-      return sum + (chargement.details
-        ? chargement.details.reduce((detSum, detail) => detSum + Number(detail.quantite), 0)
-        : 0);
-    }, 0);
+    // const totalPieces = chargements.reduce((sum, chargement) => {
+    //   return sum + (chargement.details
+    //     ? chargement.details.reduce((detSum, detail) => detSum + Number(detail.quantite), 0)
+    //     : 0);
+    // }, 0);
+      const totalPieces = chargements.reduce((sum, chargement) => {
+        return sum + (chargement.details
+          ? chargement.details.reduce(
+              (detSum, detail) =>
+                ["balaste", "couvercles"].includes(detail.famille?.nom_famille?.toLowerCase())
+                  ? detSum 
+                  : detSum + Number(detail.quantite),
+              0
+            )
+          : 0);
+      }, 0);
 
     const chargementCount = chargements.length;
 

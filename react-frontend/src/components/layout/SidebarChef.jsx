@@ -18,6 +18,7 @@ import SettingsApplicationsIcon from '@mui/icons-material/SettingsApplications';
 import DescriptionIcon from '@mui/icons-material/Description';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import SearchIcon from '@mui/icons-material/Search';
 import Cookies from 'js-cookie';
 
 //  Thème global
@@ -257,6 +258,12 @@ const NAVIGATION = [
     icon: <HistoryIcon />,
     path: '/history'
   },
+   {
+    segment: 'recherche',
+    title: 'Recherche',
+    icon: <SearchIcon />,
+    path: '/recherche'
+  },
   // {
   //   segment: 'team',
   //   title: 'Team management',
@@ -345,14 +352,14 @@ const NAV_CHEF = [
     icon: <LogoutIcon color="error" /> 
   },
 ];
-const NAV_JeuneFour = [
+const NAV_Cuiseur= [
    { kind: 'header',
    title: 'Main Menu'
   },
-   { segment: 'jeuneFour',
+   { segment: 'cuiseur',
     title: 'Chargements Four',
     icon: <LocalFireDepartmentIcon />, 
-    path: '/jeuneFour' 
+    path: '/cuiseur' 
   },
   { segment: 'historique',
     title: 'Historique Chargements',
@@ -464,13 +471,13 @@ const SidebarChef = ({ children, window }) => {
       </AppProvider>
     );
   }
-    if (role === "jeune four" || role === 'jeune') {
+    if (role === "cuiseur") {
     return (
       <AppProvider
-        navigation={NAV_JeuneFour}
+        navigation={NAV_Cuiseur}
          branding={{
           title: 'eKiln',
-          homeUrl: '/jeuneFour',
+          homeUrl: '/cuiseur',
         }}
         router={router}
         theme={appTheme}

@@ -113,61 +113,74 @@ const FourTrieursNeeded = ({ data, four, fullWidth }) => {
   }
   };
 
-  const fetchData = async (startFromWagon = null, count = wagonCount) => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      
-      const params = { 
-          id_four: id_four,
-          limit: count,
-          ...(startFromWagon && { start_from_wagon: startFromWagon })
-      };
+ const fetchData = async (startFromWagon = null, count = wagonCount) => {
+  try {
+    setLoading(true);
+    const token = localStorage.getItem('token');
 
-      // Requête pour les wagons
-      const wagonsResponse = await axios.get('http://localhost:8000/api/chargements/interval', {
-          headers: { 'Authorization': `Bearer ${token}` },
-          params: params
-      });
-        const wagons = wagonsResponse.data.chargements;
+    const params = {
+      id_four: id_four,
+      limit: count,
+      ...(startFromWagon && { start_from_wagon: startFromWagon })
+    };
 
-    // Vérifier "balaste" pour chaque wagon et  Ajouter "containsBalsate" pour chaque wagon
-    const wagonsWithDetails = await Promise.all(
-      wagons.map(async (wagon) => {
-        const details = await getWagonDetails(wagon.id);
-        const containsBalsate = details?.details?.some(
-          d => d.nom_famille?.trim().toLowerCase() === 'balaste'
-        ) || false;
-        return { ...wagon, containsBalsate };
-      })
+    // Fetch wagons
+    const wagonsResponse = await axios.get('http://localhost:8000/api/chargements/interval', {
+      headers: { Authorization: `Bearer ${token}` },
+      params
+    });
+
+    const wagons = wagonsResponse.data.chargements;
+
+    // Fetch all details in one batch
+    const batchResponse = await axios.post(
+      'http://localhost:8000/api/chargements/details-batch',
+      { ids: wagons.map(w => w.id) },
+      { headers: { Authorization: `Bearer ${token}` } }
     );
+
+    const detailsMap = new Map();
+    batchResponse.data.data.forEach(item => {
+      detailsMap.set(item.id, item.details);
+    });
+
+    console.log("details",detailsMap);
+    // Merge details into wagons
+    const wagonsWithDetails = wagons.map(wagon => {
+      const wagonDetails = detailsMap.get(wagon.id) || [];
+    console.log("wagons",wagonDetails);
+      const containsBalsate = wagonDetails.some(
+        d => d.id_famille === 37
+      );
+      return { ...wagon, containsBalsate };
+    });
+
     setWagonsData(wagonsWithDetails);
-      console.log("Wagons Response:", wagonsResponse.data);
-      // setWagonsData(wagonsResponse.data.chargements);
-      setCurrentInterval(`${wagonsResponse.data.current_interval.start} - ${wagonsResponse.data.current_interval.end}`);
-      setTotalCount(wagonsResponse.data.total_count || wagonsResponse.data.chargements.length);
+    setCurrentInterval(`${wagonsResponse.data.current_interval.start} - ${wagonsResponse.data.current_interval.end}`);
+    setTotalCount(wagonsResponse.data.total_count || wagonsResponse.data.chargements.length);
 
-      // Requête pour les trieurs nécessaires avec les MÊMES paramètres
-      const trieursResponse = await axios.get('http://localhost:8000/api/chargements/calculate-trieurs', {
-          headers: { 'Authorization': `Bearer ${token}` },
-          params: params
-      });
-      //console.log("Trieurs Response:", trieursResponse.data);
-      setCustomTrieursNeeded({
-          ...trieursResponse.data,
-          interval: wagonsResponse.data.current_interval
-      });
+    // Fetch trieurs
+    const trieursResponse = await axios.get('http://localhost:8000/api/chargements/calculate-trieurs', {
+      headers: { Authorization: `Bearer ${token}` },
+      params
+    });
 
-    } catch (error) {
-        console.error("Erreur de chargement:", error);
-        //setError("Erreur lors du chargement des données");
-        setError("Il ya aucun wagon charger ou sortie dans ce shift");
-        setWagonsData([]);
-        setCustomTrieursNeeded(null);
-    } finally {
-        setLoading(false);
-    }
-  };
+    setCustomTrieursNeeded({
+      ...trieursResponse.data,
+      interval: wagonsResponse.data.current_interval
+    });
+
+  } catch (error) {
+    console.error("Erreur de chargement:", error);
+    setError("Il ya aucun wagon charger ou sortie dans ce shift");
+    setWagonsData([]);
+    setCustomTrieursNeeded(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const handleSearchByWagon = () => {
       if (wagonSearch.trim() === '') {

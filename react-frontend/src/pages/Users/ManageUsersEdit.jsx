@@ -26,7 +26,8 @@ const ROLES = [
   'admin',
   'chef d\'equipe',
   'trieur',
-  'enfourneur'
+  'enfourneur',
+  'cuiseur'
 ];
 
 export default function ManageUsersEdit() {

@@ -28,7 +28,8 @@ import ChargementContent from './pages/ChargementContent';
 import TrieursTable from './pages/TrieursTable';
 import EnfourneurTable from './pages/EnfourneurTable';
 import AffectationContent from './pages/AffectationContent';
-import JeuneFour from './pages/jeuneFour';
+import Cuiseur from './pages/Cuiseur';
+import Recherche from './pages/Recherche';
 function App() {
   return (
     <AuthProvider>
@@ -60,7 +61,8 @@ function App() {
         <Route path= "/team/trieurs" element={<TrieursTable/>}/>
         <Route path= "/team/enfourneur" element={<EnfourneurTable/>}/>
         <Route path="/affectation" element={<AffectationContent/>}/>
-        <Route path="/jeuneFour" element={<JeuneFour />} />
+        <Route path="/cuiseur" element={<Cuiseur />} />
+        <Route path="/recherche" element={<Recherche/>}/>
       </Routes>
     </AuthProvider>
   );

@@ -14,10 +14,6 @@ import {
   Button,
   Chip,
   Modal,
-  Grid,
-  Tabs,
-  Tab,
-  Badge,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { format, parseISO } from "date-fns";
@@ -25,7 +21,7 @@ import { fr } from "date-fns/locale";
 import ChargementDetailsModal from "./Chargement/ChargementDetailsModal";
 import SidebarChef from "../components/layout/SidebarChef";
 
-function JeuneFour() {
+function Cuiseur() {
   const [wagonsParFour, setWagonsParFour] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -99,8 +95,8 @@ function JeuneFour() {
   };
 
   //  Ouvrir modal de validation
-  const handleOpenModal = (chargement) => {
-    setSelectedChargement(chargement);
+  const handleOpenModal = (chargement , mode) => {
+    setSelectedChargement({...chargement , mode});
     setOpenModal(true);
   };
 
@@ -165,7 +161,7 @@ function JeuneFour() {
                       size="small"
                       variant="outlined"
                       color="primary"
-                      onClick={() => handleOpenModal(c)}
+                      onClick={() => handleOpenModal(c ,"editer")}
                     >
                       Éditer
                     </Button>
@@ -174,7 +170,7 @@ function JeuneFour() {
                       size="small"
                       variant="contained"
                       color="success"
-                      onClick={() => handleOpenModal(c)}
+                      onClick={() => handleOpenModal(c ,"valider")}
                     >
                       Valider
                     </Button>
@@ -202,87 +198,48 @@ function JeuneFour() {
         <Typography variant="h4" gutterBottom>
           Wagons par four
         </Typography>
+    {/* Boutons pour choisir le four */}
+  <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+    {Object.keys(wagonsParFour).map((numFour) => {
+      const count = wagonsParFour[numFour]?.enAttente?.length || 0;
+      const isActive = selectedFour === numFour;
+      const chipWidth = `${Math.max(count.toString().length * 10 + 10, 30)}px`; 
 
-        {/* Onglets des fours */}
-      <Tabs
-      value={selectedFour}
-        // onChange={(e, newValue) => setSelectedFour(newValue)}
-      onChange={(e, newValue) => {
-        setSelectedFour(newValue); // change de four
-        setLoading(true);          // montrer le loader
-        // On attend 50ms pour que le loader apparaisse avant de fetcher
-        setTimeout(() => {
-          fetchWagons();
-        }, 50);
-      }}
-      sx={{ mb: 2 }}
-      variant="scrollable"
-      scrollButtons="auto"
-    >
-      {Object.keys(wagonsParFour).map((numFour) => {
-        const count = wagonsParFour[numFour]?.enAttente?.length || 0;
-
-        return (
-          <Tab
-            key={numFour}
-            value={numFour}
-            sx={{
-              border: "1px solid #ccc",
-              borderRadius: 2,
-              textTransform: "none",
-              marginRight: 1,
-              "&.Mui-selected": {
-                backgroundColor: "#1976d2",
-                color: "#fff",
-                fontWeight: "bold",
-              },
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              position: "relative",
-              paddingTop: 2,
-              paddingBottom: 2,
-            }}
-            label={
-              <Box sx={{ position: "relative", width: "100%" }}>
-               <Badge
-                  badgeContent={count}
-                  color="warning"
-                  max={999}
-                  sx={{
-                    position: "absolute",
-                    top: -6,
-                    right: 5,
+    return (
+             <Button
+                key={numFour}
+                variant={isActive ? "contained" : "outlined"}
+                onClick={() => {
+                    setSelectedFour(numFour); // changer le four
+                    setLoading(true);          // afficher le loader
+                    fetchWagons();             // actualiser les wagons
                   }}
-                >
-               </Badge>
-               {/* <Box
-                  sx={{
-                    position: "absolute",
-                    top: -17,
-                    left: 48,
-                    width: 24,
-                    height: 24,
-                    backgroundColor: (theme) => theme.palette.warning.main, // couleur warning
-                    color: "#fff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 12,
-                    fontWeight: "bold",
-                    borderRadius: 1, // coins légèrement arrondis pour carré
-                  }}
-                >
-                  {count}
-                </Box> */}
+                sx={{
+                  borderRadius: "8px 8px 0 0",
+                  backgroundColor: isActive ? "#3498db" : "transparent",
+                  color: isActive ? "#fff" : "inherit",
+                  "&:hover": {
+                    backgroundColor: isActive ? "#2980b9" : "rgba(0,0,0,0.08)",
+                  },
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
                 <span>Four {numFour}</span>
-              </Box>
-            } 
-          />
-        );
-      })}
-    </Tabs>
+                <Chip
+                  label={count}
+                  color="warning"
+                  size="small"
+                  sx={{
+                    height: "17px",
+                    width: chipWidth,
+                  }}
+                />
+              </Button>
+            );
+          })}
+  </Box>
         {/* Bouton actualiser */}
         <Button
           variant="contained"
@@ -304,7 +261,7 @@ function JeuneFour() {
         <Box
           sx={{
             flex: 1,
-            height: 450,
+            height: 850,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -318,7 +275,7 @@ function JeuneFour() {
           <Box
             sx={{
               flex: 1,
-              height: 450,
+              height: 850,
               display: "flex",
               flexDirection: "column",
             }}
@@ -334,7 +291,7 @@ function JeuneFour() {
           <Box
             sx={{
               flex: 1,
-              height: 450,
+              height: 850,
               display: "flex",
               flexDirection: "column",
             }}
@@ -351,10 +308,8 @@ function JeuneFour() {
     </Box>
   </Box>
 ) : (
-  <Typography>Aucun wagon trouvé pour ce four.</Typography>
+  <Typography> Chargement en cours...</Typography>
 )}
-
-
         {selectedChargement && (
           <Modal open={openModal} onClose={() => setOpenModal(false)}>
             <ChargementDetailsModal
@@ -370,4 +325,4 @@ function JeuneFour() {
   );
 }
 
-export default JeuneFour;
+export default Cuiseur;

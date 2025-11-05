@@ -67,10 +67,6 @@ const getInitialDate = async () => {
     console.error("Erreur récupération dernière date :", error);
     // En cas d'erreur, on retourne une date actuelle + décalage
     let fallbackDate = new Date();
-    // if (chargement.id_four === 6)
-    //   fallbackDate = new Date(fallbackDate.getTime() + 16 * 60 * 1000);
-    // else if (chargement.id_four === 7)
-    //   fallbackDate = new Date(fallbackDate.getTime() + 34 * 60 * 1000);
     return fallbackDate;
   }
 };
@@ -101,7 +97,9 @@ useEffect(() => {
 
   const formatDate = (dateString) =>
     format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: fr });
-
+ const user = JSON.parse(localStorage.getItem('user'));
+ const role = user?.role?.toLowerCase();
+ const showField = chargement.mode === "editer" || role === "admin";
   if (!chargement) return null;
 
   return (
@@ -202,14 +200,37 @@ useEffect(() => {
       <Divider sx={{ my: 2 }} />
 
       {/* Modification de l'heure */}
+      {["admin","cuiseur"].includes(user?.role?.toLowerCase()) && location.pathname.toLowerCase().includes("/cuiseur") &&(
+     <>
       <Typography sx={{ mb: 1 }}>Heure d’entrée :</Typography>
+      <Grid container spacing={2}>
+      <Grid item xs={6}>
+     {showField && (
+        <>
+          <TextField
+            type="date"
+            value={validationDate ? format(validationDate, "yyyy-MM-dd") : ""}
+            onChange={(e) => {
+              const newDate = new Date(
+                e.target.value + "T" + format(validationDate, "HH:mm")
+              );
+              setValidationDate(newDate);
+            }}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
+        </>
+      )}
+      </Grid>
+       <Grid item xs={6}>
       <TextField
         type="time"
         value={validationDate ? format(validationDate, "HH:mm") : ""}
         onChange={handleChangeTime}
         fullWidth
       />
-
+       </Grid>
+       </Grid>
       {/* Boutons */}
       <Box display="flex" justifyContent="flex-end" mt={3}>
         <Button onClick={onClose} sx={{ mr: 2 }}>
@@ -223,6 +244,8 @@ useEffect(() => {
           Valider
         </Button>
       </Box>
+       </>
+)}
     </Box>
   );
 }

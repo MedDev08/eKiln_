@@ -26,7 +26,7 @@ const ROLES = [
   'chef d\'equipe',
   'trieur',
   'enfourneur',
-  'jeune four'
+  'cuiseur'
 ];
 
 export default function ManageUsersAdd() {

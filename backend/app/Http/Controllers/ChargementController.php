@@ -1363,4 +1363,104 @@ class ChargementController extends Controller
             'data' => $chargement
         ]);
     }
+    public function getrecherche(Request $request)
+    {
+        try {
+            $dateFrom = $request->input('date_from');
+            $dateTo = $request->input('date_to');
+            $matricule = $request->input('matricule');
+            $wagon = $request->input('wagon');
+            $four = $request->input('four');
+            $shift = $request->input('shift');
+            $perPage = $request->input('per_page', 10);
+
+            //  Requête filtrée
+            $query = Chargement::with(['user', 'wagon', 'four', 'details.famille'])
+                ->when($dateFrom, fn($q) => $q->whereDate('datetime_chargement', '>=', $dateFrom))
+                ->when($dateTo, fn($q) => $q->whereDate('datetime_chargement', '<=', $dateTo))
+                ->when($matricule, fn($q) => $q->whereHas('user', fn($q2) => $q2->where('matricule', 'like', "%{$matricule}%")))
+                ->when($wagon, fn($q) => $q->whereHas('wagon', fn($q2) => $q2->where('num_wagon', 'like', "%{$wagon}%")))
+                ->when($four, fn($q) => $q->whereHas('four', fn($q2) => $q2->where('num_four', 'like', "%{$four}%")));
+
+            //  Filtre shift 
+            if ($shift) {
+                $query->whereRaw('
+                CASE
+                    WHEN CAST(datetime_chargement AS TIME) BETWEEN "06:00:00" AND "13:59:59" THEN 1
+                    WHEN CAST(datetime_chargement AS TIME) BETWEEN "14:00:00" AND "21:59:59" THEN 2
+                    ELSE 3
+                END = ?
+            ', [$shift]);
+            }
+
+            $query->selectRaw('chargements.*, 
+            CASE
+                WHEN CAST(datetime_chargement AS TIME) BETWEEN "06:00:00" AND "13:59:59" THEN 1
+                WHEN CAST(datetime_chargement AS TIME) BETWEEN "14:00:00" AND "21:59:59" THEN 2
+                ELSE 3
+            END as shift
+        ');
+
+            //  On clone la requête pour calculer les totaux sur *tous les résultats*
+            $all = (clone $query)->get();
+
+            $totalChargements = $all->count();
+            $totalPieces = $all->sum(fn($c) => $c->details->sum('quantite'));
+            $totalBalasteWagons = $all->sum(
+                fn($c) =>
+                $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'balaste')->count()
+            );
+            $totalcouvercles = $all->sum(
+                fn($c) =>
+                $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'couvercles')->sum('quantite')
+            );
+            $totalPiecesSansBalasteCouvercle = $all->sum(
+                fn($c) =>
+                $c->details->reject(fn($d) => in_array(strtolower($d->famille->nom_famille), ['balaste', 'couvercles']))
+                    ->sum('quantite')
+            );
+            $densite = $totalChargements > 0 ? round($totalPiecesSansBalasteCouvercle / $totalChargements, 2) : 0;
+
+            //  on applique la pagination réelle 
+            $chargements = $query->orderBy('datetime_chargement', 'desc')->paginate($perPage);
+
+            //  Réponse finale
+            return response()->json([
+                'success' => true,
+                'data' => $chargements,
+                'totaux' => [
+                    'chargements' => $totalChargements,
+                    'pieces' => $totalPieces,
+                    'balastes' => $totalBalasteWagons,
+                    'couvercles'  => $totalcouvercles,
+                    'pieces_sans_balaste_couvercle' => $totalPiecesSansBalasteCouvercle,
+                    'densite' => $densite,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la recherche',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    public function getBatchDetails(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'No IDs provided'], 400);
+        }
+
+        $details = Chargement::whereIn('id', $ids)
+            ->with('details') // assuming 'details' is a relationship
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $details
+        ]);
+    }
 }

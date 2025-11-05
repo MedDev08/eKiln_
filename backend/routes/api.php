@@ -154,5 +154,6 @@ Route::put('/chargements/{chargement}', [ChargementController::class, 'update'])
 Route::get('/chargements/en-attente', [ChargementController::class, 'getWagonsEnAttente']);
 Route::post('/chargements/valider/{id}', [ChargementController::class, 'valider']);
 Route::get('/chargements/last-date/{idFour}', [ChargementController::class, 'getLastDateEntrer']);
-
+Route::get('/chargements/recherche', [ChargementController::class, 'getrecherche']);
+Route::post('/chargements/details-batch', [ChargementController::class, 'getBatchDetails']);
 // });

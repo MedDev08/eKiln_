@@ -50,8 +50,8 @@ function Login() {
         case "trieur":
           navigate("/trieur");
           break;
-        case "jeune four":
-          navigate("/jeuneFour");
+        case "cuiseur":
+          navigate("/cuiseur");
           break;
         default:
           navigate("/");

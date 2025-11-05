@@ -315,27 +315,7 @@ const handleFilterChange = (field, value) => {
       {/* Filtres */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          {/* <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Rechercher par wagon, four ou statut..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: <SearchIcon sx={{ mr: 1 }} />
-              }}
-            />
-          </Grid> */}
           <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            {/* <Button
-              variant="outlined"
-              startIcon={<FilterIcon />}
-              onClick={() => setShowFilters(!showFilters)}
-              sx={{ mr: 2 }}
-            >
-              Filtres
-            </Button> */}
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}

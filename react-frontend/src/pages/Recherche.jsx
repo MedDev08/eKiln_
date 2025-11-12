@@ -144,6 +144,8 @@ export default function Recherche() {
   const [wagons, setWagons] = useState([]);
   const [users, setUsers] = useState([]);
   const [editSuccess, setEditSuccess] = useState(false);
+  const [type_wagon, settype_wagon] = useState([]);
+
 
   const [searchParams, setSearchParams] = useState({
     matricule: "",
@@ -153,6 +155,7 @@ export default function Recherche() {
     four: "",
     shift: "",
     statut:"",
+    type_wagon:"",
   });
   const formatDate = (dateString) =>
       dateString
@@ -178,18 +181,22 @@ export default function Recherche() {
   const fetchInitialData = async () => {
   try {
     const token = localStorage.getItem("token");
-    const [famillesRes, foursRes, wagonsRes,usersRes] = await Promise.all([
+    const [famillesRes, foursRes, wagonsRes,usersRes,typeWagonsRes ] = await Promise.all([
       axios.get("http://localhost:8000/api/familles", { headers: { Authorization: `Bearer ${token}` } }),
       axios.get("http://localhost:8000/api/fours", { headers: { Authorization: `Bearer ${token}` } }),
       axios.get("http://localhost:8000/api/wagons1", { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get("http://localhost:8000/api/users", { headers: { Authorization: `Bearer ${token}` } }) // utilisateurs
+      axios.get("http://localhost:8000/api/users", { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get("http://localhost:8000/api/type_wagons", { headers: { Authorization: `Bearer ${token}` } })
 
     ]);
     setFamilles(famillesRes.data);
     setFours(foursRes.data);
     setWagons(wagonsRes.data.data);
     setUsers(usersRes.data.data);
-      console.log("users",usersRes.data.data);
+    console.log("users",usersRes.data.data);
+    settype_wagon(typeWagonsRes.data);
+    console.log("type_wagon",typeWagonsRes.data);
+
   } catch (err) {
     console.error("Erreur fetchInitialData :", err);
   }
@@ -318,7 +325,7 @@ useEffect(() => {
         label="Wagon"
         value={searchParams.wagon || ""}
         onChange={e => setSearchParams({ ...searchParams, wagon: e.target.value })}
-        sx={{ width: 100 }}
+        sx={{ width: 80 }}
       />
     </Grid>
     <Grid item>
@@ -327,6 +334,15 @@ useEffect(() => {
         label="Four"
         value={searchParams.four || ""}
         onChange={e => setSearchParams({ ...searchParams, four: e.target.value })}
+        sx={{ width: 80 }}
+      />
+    </Grid>
+    <Grid item>
+      <TextField
+        size="small"
+        label="Type Wagon"
+        value={searchParams.type_wagon || ""}
+        onChange={e => setSearchParams({ ...searchParams, type_wagon: e.target.value })}
         sx={{ width: 100 }}
       />
     </Grid>
@@ -513,7 +529,8 @@ useEffect(() => {
           selectedChargement={selectedChargement}
           familles={familles}       
           fours={fours}            
-          wagons={wagons}          
+          wagons={wagons} 
+          type_wagon={type_wagon}        
           users={users}            
           // onUpdate={(updated) => {
           //   setChargements(prev =>

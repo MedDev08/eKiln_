@@ -1196,6 +1196,7 @@ class ChargementController extends Controller
         $validated = $request->validate([
             'id_wagon' => 'required|exists:wagons,id_wagon',
             'id_four'  => 'required|exists:fours,id_four',
+            'id_typeWagon' => 'required|exists:type_wagon,id',
             'id_user'  => 'required|exists:users,id_user',
             'datetime_chargement' => 'required|date',
             'statut' => 'required|string',
@@ -1255,7 +1256,7 @@ class ChargementController extends Controller
             }
             return response()->json([
                 'message' => 'Chargement mis à jour avec succès',
-                'data' => $chargement->load('details.famille', 'wagon', 'four', 'user')
+                'data' => $chargement->load('details.famille', 'wagon', 'four', 'user', 'type_wagon')
             ]);
         }
     }
@@ -1374,6 +1375,7 @@ class ChargementController extends Controller
             $matricule = $request->input('matricule');
             $wagon = $request->input('wagon');
             $four = $request->input('four');
+            $type_wagon = $request->input('type_wagon');
             $shift = $request->input('shift');
             $statut = $request->input('statut');
             $perPage = $request->input('per_page', 10);
@@ -1384,7 +1386,8 @@ class ChargementController extends Controller
                 ->when($dateTo, fn($q) => $q->whereDate('datetime_chargement', '<=', $dateTo))
                 ->when($matricule, fn($q) => $q->whereHas('user', fn($q2) => $q2->where('matricule', 'like', "%{$matricule}%")))
                 ->when($wagon, fn($q) => $q->whereHas('wagon', fn($q2) => $q2->where('num_wagon', 'like', "%{$wagon}%")))
-                ->when($four, fn($q) => $q->whereHas('four', fn($q2) => $q2->where('num_four', 'like', "%{$four}%")));
+                ->when($four, fn($q) => $q->whereHas('four', fn($q2) => $q2->where('num_four', 'like', "%{$four}%")))
+                ->when($type_wagon, fn($q) => $q->whereHas('type_wagon', fn($q2) => $q2->where('type_wagon', 'like', "%{$type_wagon}%")));
             if ($statut) {
                 $query->where('statut', 'like', "%{$statut}%");
             }
@@ -1502,7 +1505,7 @@ class ChargementController extends Controller
                     'balastes' => $totalbalaste,
                     'couvercles'  => $totalcouvercles,
                     'pieces_sans_balaste_couvercle' => $totalPiecesSansBalasteCouvercle,
-                    'densite_finale' => $densite_finale,
+                    //'densite_finale' => $densite_finale,
                     'densite' => $densite,
                     'totalChargementsPourDensity' => $totalChargementsPourDensity
                 ],

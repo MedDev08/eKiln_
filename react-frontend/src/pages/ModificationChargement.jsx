@@ -17,12 +17,14 @@ export default function ModificationChargement({
   familles,
   fours,
   wagons,
+  type_wagon,
   users,
   onUpdate,
   onSuccessMessage
 }) {
   const [editFormData, setEditFormData] = useState({
     wagon_id: '',
+    type_wagon_id:'',
     four_id: '',
     user_id: '',
     datetime_chargement: '',
@@ -45,6 +47,7 @@ export default function ModificationChargement({
       setEditFormData({
         wagon_id: selectedChargement.wagon?.id_wagon || '',
         four_id: selectedChargement.four?.id_four || '',
+        type_wagon_id: selectedChargement.type_wagon?.id|| '',
         user_id: selectedChargement.user?.id_user || '',
         datetime_chargement: selectedChargement.datetime_chargement?.slice(0, 10) || '',
         statut: selectedChargement.statut || '',
@@ -71,6 +74,7 @@ export default function ModificationChargement({
       const payload = {
         id_wagon: editFormData.wagon_id,
         id_four: editFormData.four_id,
+        id_typeWagon: editFormData.type_wagon_id,
         id_user: editFormData.user_id,
         datetime_chargement: editFormData.datetime_chargement,
         statut: editFormData.statut,
@@ -117,6 +121,13 @@ export default function ModificationChargement({
             value={wagons.find(w => w.id_wagon === editFormData.wagon_id) || null}
             onChange={(e, newValue) => setEditFormData({...editFormData, wagon_id: newValue ? newValue.id_wagon : ''})}
             renderInput={(params) => <TextField {...params} label="Wagon" required margin="normal" />}
+          />
+          <Autocomplete
+            options={type_wagon}
+            getOptionLabel={w => `${w.type_wagon}`}
+            value={type_wagon.find(w => w.id == editFormData.type_wagon_id) || null}
+            onChange={(e, newValue) => setEditFormData({...editFormData, type_wagon_id: newValue ? newValue.id : ''})}
+            renderInput={(params) => <TextField {...params} label="Type Wagon" required margin="normal" />}
           />
 
           {/* Four */}

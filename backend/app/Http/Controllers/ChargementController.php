@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Chargement;
 use App\Models\DetailChargement;
 use App\Models\Wagon;
+use App\Models\Density;
 use App\Models\Four;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -28,6 +29,7 @@ class ChargementController extends Controller
         $request->validate([
             'id_wagon' => 'required|exists:wagons,id_wagon',
             'id_four' => 'required|exists:fours,id_four',
+            'id_typeWagon' => 'nullable|exists:type_wagon,id',
             'pieces' => 'required|array',
             'pieces.*.id_famille' => 'required|exists:familles,id_famille',
             'pieces.*.quantite' => 'required|integer|min:1',
@@ -47,6 +49,7 @@ class ChargementController extends Controller
             'id_user' => $user->id_user,
             'id_wagon' => $request->id_wagon,
             'id_four' => $request->id_four,
+            'id_typeWagon' => $request->id_typeWagon,
             'datetime_chargement' => now(),
             'statut' => 'en cours',
         ]);
@@ -95,7 +98,7 @@ class ChargementController extends Controller
         }
 
         // Récupérer les chargements pour le shift
-        $chargements = Chargement::with(['four', 'details.famille', 'wagon'])
+        $chargements = Chargement::with(['four', 'details.famille', 'wagon', 'type_wagon'])
             ->where('id_user', $user->id_user)
             ->whereBetween('datetime_chargement', [$start, $end])
             ->orderBy('datetime_chargement', 'desc')
@@ -1372,16 +1375,19 @@ class ChargementController extends Controller
             $wagon = $request->input('wagon');
             $four = $request->input('four');
             $shift = $request->input('shift');
+            $statut = $request->input('statut');
             $perPage = $request->input('per_page', 10);
 
             //  Requête filtrée
-            $query = Chargement::with(['user', 'wagon', 'four', 'details.famille'])
+            $query = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'type_wagon'])
                 ->when($dateFrom, fn($q) => $q->whereDate('datetime_chargement', '>=', $dateFrom))
                 ->when($dateTo, fn($q) => $q->whereDate('datetime_chargement', '<=', $dateTo))
                 ->when($matricule, fn($q) => $q->whereHas('user', fn($q2) => $q2->where('matricule', 'like', "%{$matricule}%")))
                 ->when($wagon, fn($q) => $q->whereHas('wagon', fn($q2) => $q2->where('num_wagon', 'like', "%{$wagon}%")))
                 ->when($four, fn($q) => $q->whereHas('four', fn($q2) => $q2->where('num_four', 'like', "%{$four}%")));
-
+            if ($statut) {
+                $query->where('statut', 'like', "%{$statut}%");
+            }
             //  Filtre shift 
             if ($shift) {
                 $query->whereRaw('
@@ -1406,6 +1412,62 @@ class ChargementController extends Controller
 
             $totalChargements = $all->count();
             $totalPieces = $all->sum(fn($c) => $c->details->sum('quantite'));
+
+            $densities = Density::all()->keyBy(fn($item) => $item->id_famille . '_' . $item->id_typeWagon . '_' . $item->id_four);
+
+            $densityResults = [];
+            // $totalDensity = 0;
+            $idFours = $all->pluck('id_four')->unique();
+            foreach ($idFours as $id_four) {
+                // Récupérer uniquement les chargements de ce four
+                $chargementsDuFour = $all->where('id_four', $id_four);
+                $totalDensity = 0;
+                foreach ($chargementsDuFour as $chargement) {
+                    $density_famille = 0;
+                    $i = 0;
+
+                    foreach ($chargement->details as $detail) {
+                        $key = $detail->id_famille . '_' . $chargement->id_typeWagon . '_' . $chargement->id_four;
+                        $densityRecord = $densities->get($key);
+
+                        if ($densityRecord && $densityRecord->density_value != 0) {
+                            $density_famille += ($detail->quantite * 100) / $densityRecord->density_value;
+                            $i++;
+                        }
+                    }
+
+                    $density_chargement = $i > 0 ? $density_famille / $i : 0;
+                    $totalDensity += $density_chargement;
+                }
+                // Compter les wagons Balaste seul ou Balaste + Couvercle
+                $wagonsBalasteCouvercle = $all->filter(function ($chargement) {
+                    // On ne regarde que les wagons qui contiennent Balaste
+                    $familles = $chargement->details->pluck('famille.nom_famille')
+                        ->map(fn($f) => strtolower($f))
+                        ->unique();
+                    return $familles->contains('balaste') && $familles->every(fn($f) => in_array($f, ['balaste', 'couvercles']));
+                })->count();
+                $totalChargements = $all->count();
+                // Calculer la densité finale en excluant ces wagons
+                $totalChargementsPourDensity = $totalChargements - $wagonsBalasteCouvercle;
+                $densite_finale = $totalChargementsPourDensity > 0
+                    ? round($totalDensity / $totalChargementsPourDensity, 2)
+                    : 0;
+                // Récupérer le numéro du four depuis la table `fours`
+                $num_four = Four::where('id_four', $id_four)->value('num_four');
+
+                // Ajouter le résultat dans le tableau final
+                $densityResults[] = [
+                    'id_four' => $id_four,
+                    'num_four' => $num_four,
+                    'densite_finale' => $densite_finale
+                ];
+            }
+            // $densityResults[] = [
+            //     'num_for' => $chargement->id,
+            //     'densite_finale' => $densite_finale
+            // ];
+
             $totalBalasteWagons = $all->sum(
                 fn($c) =>
                 $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'balaste')->count()
@@ -1413,6 +1475,10 @@ class ChargementController extends Controller
             $totalcouvercles = $all->sum(
                 fn($c) =>
                 $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'couvercles')->sum('quantite')
+            );
+            $totalbalaste = $all->sum(
+                fn($c) =>
+                $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'balaste')->sum('quantite')
             );
             $totalPiecesSansBalasteCouvercle = $all->sum(
                 fn($c) =>
@@ -1428,13 +1494,17 @@ class ChargementController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $chargements,
+                'densite_par_four' => $densityResults,
                 'totaux' => [
                     'chargements' => $totalChargements,
                     'pieces' => $totalPieces,
-                    'balastes' => $totalBalasteWagons,
+                    'wagons_avec_balaste' => $totalBalasteWagons,
+                    'balastes' => $totalbalaste,
                     'couvercles'  => $totalcouvercles,
                     'pieces_sans_balaste_couvercle' => $totalPiecesSansBalasteCouvercle,
+                    'densite_finale' => $densite_finale,
                     'densite' => $densite,
+                    'totalChargementsPourDensity' => $totalChargementsPourDensity
                 ],
             ]);
         } catch (\Exception $e) {

@@ -112,7 +112,7 @@ export default function EnhancedDataGrid() {
         <>
           <IconButton
             color="primary"
-            onClick={() => navigate(`/manage-users/edit/${params.row.id}`)}
+            onClick={() => navigate(`/settings/manage-users/edit/${params.row.id}`)}
           >
             <EditIcon />
           </IconButton>
@@ -178,7 +178,7 @@ export default function EnhancedDataGrid() {
     setFilteredUsers(filtered);
   };
 
-  const handleAddClick = () => navigate('/manage-users/add');
+  const handleAddClick = () => navigate('/settings/manage-users/add');
   const handleDeleteClick = (id) => { setDeleteId(id); setOpenDialog(true); };
 
   const handleConfirmDelete = async () => {

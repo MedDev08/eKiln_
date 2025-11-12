@@ -56,12 +56,16 @@ function Enfourneur() {
   const wagonRef = useRef(null);
   const messageRef = useRef(null);
   const [user, setUser] = useState(null);
+  const [selectedTypeWagon, setSelectedTypeWagon] = useState("");
+  const [typeWagons, setTypeWagons] = useState([]);
+  const [typeWagonOpen, setTypeWagonOpen] = useState(false);
+
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const [famillesRes, foursRes, wagonsRes, userRes] = await Promise.all([
+        const [famillesRes, foursRes, wagonsRes, userRes,typeWagonsRes] = await Promise.all([
           axios.get("http://localhost:8000/api/familles", {
             headers: { Authorization: `Bearer ${token}` },
           }),
@@ -74,12 +78,17 @@ function Enfourneur() {
           axios.get("http://localhost:8000/api/me", {
             headers: { Authorization: `Bearer ${token}` },
           }),
+          axios.get("http://localhost:8000/api/type_wagons", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
 
         setFamilles(famillesRes.data);
         setFours(foursRes.data);
         setWAgons(wagonsRes.data.data);
         setUser(userRes.data);
+        setTypeWagons(typeWagonsRes.data);
+        console.log(typeWagonsRes.data);
 
         const initialQuantites = {};
         famillesRes.data.forEach(famille => {
@@ -112,7 +121,13 @@ function Enfourneur() {
             headers: { Authorization: `Bearer ${token}` }
         });
         const user = userResponse.data;
-//localStorage.setItem("user", JSON.stringify(user));
+      //localStorage.setItem("user", JSON.stringify(user));
+      // Vérification spécifique Four 6
+        if (!selectedTypeWagon) {
+          setError("Veuillez sélectionner un type de wagon");
+          setLoading(false);
+          return;
+        }
         const pieces = [];
         for (const id_famille in quantites) {
             if (quantites[id_famille] > 0) {
@@ -137,7 +152,8 @@ function Enfourneur() {
             //id_wagon: parseInt(wagonNum),
             id_four: parseInt(selectedFour),
             id_wagon: parseInt(selectedWagon),
-            pieces: pieces
+            pieces: pieces,
+            id_typeWagon: selectedTypeWagon ? parseInt(selectedTypeWagon) : null
         };
 
         await axios.post("http://localhost:8000/api/chargements", chargementData, {
@@ -170,18 +186,27 @@ function Enfourneur() {
             setError("Erreur réseau ou inconnue");
         }
         // Scroll vers le message
-  setTimeout(() => {
-      messageRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 50);
-    } finally {
-        setLoading(false);
-         wagonRef.current?.focus(); // remettre le focus sur le champ Wagon
-    }
-};
+        setTimeout(() => {
+            messageRef.current?.scrollIntoView({ behavior: "smooth" });
+          }, 50);
+          } finally {
+              setLoading(false);
+              wagonRef.current?.focus(); // remettre le focus sur le champ Wagon
+          }
+      };
+//    useEffect(() => {
+//   if (selectedTypeWagon === "") {
+//     // Ouvre l'Autocomplete Type Wagon automatiquement
+//     setTypeWagonOpen(true);
+//   } else {
+//     setTypeWagonOpen(false);
+//   }
+// }, [selectedFour, selectedTypeWagon]);
 
   const resetForm = () => {
     //setWagonNum("");
     setSelectedWagon("");
+    setSelectedTypeWagon("");
     //setSelectedFour("");
     const resetQuantites = {};
     familles.forEach(famille => {
@@ -385,7 +410,7 @@ useEffect(() => {
             <Box component="form" onSubmit={handleSubmit} noValidate>
              <Grid container spacing={3}>
                 {/* Wagon Autocomplete */}
-                <Grid item xs={12} md={6} width="180px">
+                <Grid item xs={12} md={6} width="170px">
                   <Autocomplete
                     options={wagons}
                     getOptionLabel={(wagon) => `Wagon : ${wagon.num_wagon}`}
@@ -399,7 +424,7 @@ useEffect(() => {
                         label="Wagon"
                         required
                         margin="normal"
-                         inputRef={wagonRef} // <- ici la vraie ref sur l'input moi 
+                         inputRef={wagonRef} 
                       />
                     )}
                     sx={{ '& .MuiAutocomplete-input': { width: '240px' } }}
@@ -420,10 +445,15 @@ useEffect(() => {
                       onOpen={() => setFourOpen(true)}
                       onClose={() => setFourOpen(false)}
                       onChange={(e) => {
-                        setSelectedFour(e.target.value);
+                         const selected = e.target.value;
+                        setSelectedFour(selected);
                         setFourOpen(false); // referme après sélection
+                         // Si ce n'est pas le four 6, on réinitialise le type wagon
+                        // if (Number(selected) !== 6) {
+                        //   setSelectedTypeWagon(null); // ou "" selon ton state
+                        // }
                       }}
-                      sx={{ '& .MuiSelect-select': { width: '140px' } }}
+                      sx={{ '& .MuiSelect-select': { width: '130px' } }}
                     >
                       <MenuItem value="">
                         <em>Sélectionnez un four</em>
@@ -436,7 +466,31 @@ useEffect(() => {
                     </Select>
                   </FormControl>
                 </Grid>
-
+                <Grid item xs={12} md={6} width="130px">
+                  <Autocomplete
+                    options={typeWagons}
+                    getOptionLabel={(tw) => tw.type_wagon}
+                    value={typeWagons.find(tw => tw.id === selectedTypeWagon) || null}
+                    onChange={(event, newValue) => {
+                      setSelectedTypeWagon(newValue ? newValue.id : null);
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Type Wagon"
+                        margin="normal"
+                        required
+                      />
+                    )}
+                    open={typeWagonOpen}
+                    onOpen={() => setTypeWagonOpen(true)}
+                    onClose={() => setTypeWagonOpen(false)}
+                    sx={{
+                      width: '130px',
+                      // visibility: Number(selectedFour) === 6 ? 'visible' : 'hidden' // invisible mais espace réservé
+                    }}
+                  />
+                </Grid>
                 {/* Paper Fields */}
                 <Grid container spacing={3} justifyContent="flex-end" minWidth={"50%"}>
                   <Grid item xs={12} md={4}>

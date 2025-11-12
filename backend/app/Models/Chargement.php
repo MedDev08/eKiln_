@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 class Chargement extends Model
 {
-    protected $fillable = ['id_user', 'id_wagon', 'id_four', 'statut', 'datetime_sortieEstime'];
+    protected $fillable = ['id_user', 'id_wagon', 'id_four', 'id_typeWagon', 'statut', 'datetime_sortieEstime'];
     protected static function booted()
     {
         static::creating(function ($chargement) {
@@ -51,6 +51,10 @@ class Chargement extends Model
     public function wagon()
     {
         return $this->belongsTo(Wagon::class, 'id_wagon');
+    }
+    public function type_wagon()
+    {
+        return $this->belongsTo(TypeWagon::class, 'id_typeWagon');
     }
     public function details()
     {

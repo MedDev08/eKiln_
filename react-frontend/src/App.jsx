@@ -40,9 +40,9 @@ function App() {
         <Route path="/Enfourneur" element={<Enfourneur />} />
         <Route path="/ChefDashboard" element={<ChefDashboard />} />
 <Route path="/logout" element={<Logout />} />
-        <Route path="/manage-users" element={<ManageUsers />} />
-        <Route path="/manage-users/add" element={<ManageUsersAdd />} />
-        <Route path="/manage-users/edit/:id" element={<ManageUsersEdit />} />
+        <Route path="/settings/manage-users" element={<ManageUsers />} />
+        <Route path="/settings/manage-users/add" element={<ManageUsersAdd />} />
+        <Route path="/settings/manage-users/edit/:id" element={<ManageUsersEdit />} />
         <Route path="/settings/fours" element={<Fours />} />
         <Route path="/settings/wagons" element={<Wagons />} />
         <Route path="/settings/wagons/add" element={<WagonAdd />} />

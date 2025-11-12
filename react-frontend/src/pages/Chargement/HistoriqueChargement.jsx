@@ -43,6 +43,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import SidebarChef from '../../components/layout/SidebarChef';
+import ModificationChargement from'../ModificationChargement';
 
 const HistoriqueChargement = () => {
   const [chargements, setChargements] = useState([]);
@@ -106,30 +107,6 @@ const HistoriqueChargement = () => {
   setEditError('');
   setEditSuccess(false);
 };
-// const handleDelete = async (id) => {
-//   if (!window.confirm("Voulez-vous vraiment supprimer ce chargement ?")) return;
-
-//   try {
-//     const token = localStorage.getItem("token");
-//     const response =await axios.delete(`http://localhost:8000/api/chargements/${id}`, {
-//       headers: { Authorization: `Bearer ${token}` },
-//     });
-
-//     // Supprime le chargement du tableau local
-//     setChargements(prev => prev.filter(c => c.id !== id));
-//     // Afficher le message renvoyé par Laravel
-//     const message = response.data?.message || "Chargement supprimé avec succès ✅";
-//     alert(message);
-//   } catch (err) {
-//     console.error(err);
-//    const message = err.response?.data?.message || "Erreur lors de la suppression du chargement.";
-//     alert(message);
-//   }
-// };
-// // Gérer la saisie
-// const handleEditChange = (e) => {
-//   setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
-// };
 const fetchInitialData = async () => {
   try {
     const token = localStorage.getItem("token");

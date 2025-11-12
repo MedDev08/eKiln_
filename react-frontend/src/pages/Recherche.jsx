@@ -16,17 +16,26 @@ import {
   TableCell,
   CircularProgress,
   TablePagination,
-  Modal
+  Modal,
+  Chip,
+  IconButton,
+  Alert
 } from "@mui/material";
-import{Visibility as VisibilityIcon}from '@mui/icons-material';
+import{Visibility as VisibilityIcon ,
+Edit as EditIcon ,
+}from '@mui/icons-material';
 import axios from "axios";
 import SidebarChef from "../components/layout/SidebarChef";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import BarChartIcon from "@mui/icons-material/BarChart";
+import FlagIcon from "@mui/icons-material/Flag";
 import ChargementDetailsModal from "./Chargement/ChargementDetailsModal"; 
+import ModificationChargement from "./ModificationChargement";
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
-const StatCard = ({ title, value, icon }) => {
+const StatCard = ({ title, value, icon, subtitle  }) => {
   return (
     <Card
       sx={{
@@ -80,12 +89,30 @@ const StatCard = ({ title, value, icon }) => {
           </Box>
         )}
       </Box>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          mb: 1,
+          gap: 0.8, // petit espace entre le texte et l’icône
+        }}
+      >
        <Typography
           variant="h4"
           sx={{ fontWeight: 700, color: "#3f51b5", textAlign: "left" }}
         >
           {value}
         </Typography>
+         {subtitle && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 0.5, textAlign: "left" }}
+          >
+            / {subtitle}
+          </Typography>
+        )}
+        </Box>
       </CardContent>
     </Card>
   );
@@ -93,7 +120,17 @@ const StatCard = ({ title, value, icon }) => {
 
 export default function Recherche() {
   const [chargements, setChargements] = useState([]);
-  const [totaux, setTotaux] = useState({ chargements: 0, pieces: 0 , balastes:0 , densite: 0 , pieces_sans_balaste_couvercle: 0,couvercles:0  });
+  const [totaux, setTotaux] = useState({ 
+    chargements: 0,
+    pieces: 0 ,
+    wagons_avec_balaste:0 ,
+    densite: 0 ,
+    pieces_sans_balaste_couvercle: 0,
+    couvercles:0 ,
+    balastes:0,
+    densite_finale:0 
+  });
+  const [density,setDensity]= useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);     
   const [rowsPerPage, setRowsPerPage] = useState(10); 
@@ -101,6 +138,13 @@ export default function Recherche() {
   const today = new Date().toISOString().split("T")[0];
   const [selectedChargement, setSelectedChargement] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [familles, setFamilles] = useState([]);
+  const [fours, setFours] = useState([]);
+  const [wagons, setWagons] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [editSuccess, setEditSuccess] = useState(false);
+
   const [searchParams, setSearchParams] = useState({
     matricule: "",
     date_from: today,
@@ -108,7 +152,13 @@ export default function Recherche() {
     wagon: "",
     four: "",
     shift: "",
+    statut:"",
   });
+  const formatDate = (dateString) =>
+      dateString
+        ? format(parseISO(dateString), "dd/MM/yyyy HH:mm", { locale: fr })
+        : "-";
+  
   const getStatusColor = (status) => {
     switch (status) {
       case "en attente":
@@ -125,6 +175,29 @@ export default function Recherche() {
     setSelectedChargement({...chargement , mode});
     setOpenModal(true);
   };
+  const fetchInitialData = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const [famillesRes, foursRes, wagonsRes,usersRes] = await Promise.all([
+      axios.get("http://localhost:8000/api/familles", { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get("http://localhost:8000/api/fours", { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get("http://localhost:8000/api/wagons1", { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get("http://localhost:8000/api/users", { headers: { Authorization: `Bearer ${token}` } }) // utilisateurs
+
+    ]);
+    setFamilles(famillesRes.data);
+    setFours(foursRes.data);
+    setWagons(wagonsRes.data.data);
+    setUsers(usersRes.data.data);
+      console.log("users",usersRes.data.data);
+  } catch (err) {
+    console.error("Erreur fetchInitialData :", err);
+  }
+};
+useEffect(() => {
+  fetchInitialData();
+}, []);
+
 
   const fetchHistorique = async () => {
     try {
@@ -139,15 +212,51 @@ export default function Recherche() {
           per_page: rowsPerPage
         }
       });
-      console.log("reponse",res);
-     setChargements(res.data.data.data || []);   //les chargements sont ici
-     setTotal(res.data.data.total || 0);        // ←ou last_page*rowsPerPage si total n'existe pas
-     setTotaux(res.data.totaux || { chargements: 0, pieces: 0 , balastes:0 , densite: 0 , pieces_sans_balaste_couvercle: 0 ,couvercles:0 });
-      setTotaux(res.data.totaux || { chargements: 0, pieces: 0 , balastes:0 , densite: 0 , pieces_sans_balaste_couvercle: 0,couvercles:0 });
+      console.log("reponse",res.data.data.data);
+      console.log("Totaux :", res.data.totaux);
+      console.log("Densité par four :", res.data.densite_par_four);
+    //  setChargements(res.data.data.data || []);   //les chargements sont ici
+      const wagons = res.data.data.data || [];
+      const wagonsWithDetails = wagons.map(wagon => {
+      const containsBalsate = wagon.details?.some(
+        d => d.famille?.nom_famille?.toLowerCase() === "balaste"
+      );
+      return { ...wagon, containsBalsate };
+    });
+
+    setChargements(wagonsWithDetails);
+    setDensity(res.data.densite_par_four)
+     setTotal(res.data.data.total || 0);        // ou last_page*rowsPerPage si total n'existe pas
+     setTotaux(res.data.totaux || { chargements: 0,
+       pieces: 0 ,
+       wagons_avec_balaste:0 ,
+       densite: 0 ,
+       pieces_sans_balaste_couvercle: 0 ,
+      couvercles:0,
+      balastes:0 ,
+      densite_finale:0
+    });
+      setTotaux(res.data.totaux || { chargements: 0,
+        pieces: 0 ,
+        wagons_avec_balaste:0 ,
+        densite: 0 ,
+        pieces_sans_balaste_couvercle: 0,
+        couvercles:0 ,
+        balastes:0 ,
+        densite_finale:0
+        });
     } catch (err) {
       console.error("Erreur API:", err.response?.data || err.message);
       setChargements([]);
-      setTotaux({ chargements: 0, pieces: 0 , balastes:0 , densite: 0 , pieces_sans_balaste_couvercle: 0});
+      setTotaux({ chargements: 0,
+        pieces: 0 ,
+        wagons_avec_balaste:0 ,
+        densite: 0 ,
+        pieces_sans_balaste_couvercle: 0 ,
+        couvercles:0,
+        balastes:0,
+        densite_finale:0
+        });
     } finally {
       setLoading(false);
     }
@@ -155,8 +264,8 @@ export default function Recherche() {
 
   useEffect(() => {
     fetchHistorique();
-    const interval = setInterval(fetchHistorique, 60000);
-    return () => clearInterval(interval);
+    // const interval = setInterval(fetchHistorique, 60000);
+    // return () => clearInterval(interval);
   }, [searchParams, page, rowsPerPage]);
 
   const handleFilter = () => fetchHistorique();
@@ -164,27 +273,33 @@ export default function Recherche() {
   return (
     <SidebarChef>
       <Box p={3}>
-        <Typography variant="h5" fontWeight="bold" mb={3}>
+        <Typography variant="h5" fontWeight="bold" mb={3}>        
           📊 Historique des chargements — Administrateur
         </Typography>
 
         {/* Indicateurs */}
         <Grid container spacing={2} mb={3}>
           {[
-            { title: " chargements ", value: totaux.chargements, icon: <LocalShippingIcon fontSize="small" /> },
             { title: " pièces ", value: totaux.pieces, icon: <ViewModuleIcon fontSize="small" /> },
-            { title: "Wagons Balaste", value: totaux.balastes, icon: <ViewModuleIcon fontSize="small" /> },
+            { title: "Wagons Balaste",
+               value: totaux.wagons_avec_balaste ,
+               icon: <FlagIcon fontSize="small" />,
+               subtitle: `${totaux.balastes}`,
+             },
             { title: "couvercles ", value: totaux.couvercles, icon: <ViewModuleIcon fontSize="small" /> }, 
             { title: "Pièces sans B/C", value: totaux.pieces_sans_balaste_couvercle, icon: <ViewModuleIcon fontSize="small" /> },
+            { title: " chargements ", value: totaux.chargements, icon: <LocalShippingIcon fontSize="small" /> },
             { title: "Densité ", value: totaux.densite, icon: <BarChartIcon fontSize="small" /> },
+              // Spread the dynamically generated items
+            ...density.map((four) => ({ title: `Four ${four.num_four}`, value: four.densite_finale, icon: <BarChartIcon fontSize="small" /> }
+            ))
           ].map(
             (stat, i) => (
            <Grid item xs={12} sm={6} key={i}>
-              <StatCard title={stat.title} value={stat.value} icon={stat.icon} />
+              <StatCard title={stat.title} value={stat.value} icon={stat.icon}  subtitle={stat.subtitle}  />
             </Grid>
           ))}
         </Grid>
-
         {/* Filtres */}
 <Paper sx={{ p: 2, mb: 3 }}>
   <Grid container spacing={1} alignItems="center">
@@ -212,6 +327,15 @@ export default function Recherche() {
         label="Four"
         value={searchParams.four || ""}
         onChange={e => setSearchParams({ ...searchParams, four: e.target.value })}
+        sx={{ width: 100 }}
+      />
+    </Grid>
+     <Grid item>
+      <TextField
+        size="small"
+        label="statut "
+        value={searchParams.statut || ""}
+        onChange={e => setSearchParams({ ...searchParams, statut: e.target.value })}
         sx={{ width: 100 }}
       />
     </Grid>
@@ -249,11 +373,21 @@ export default function Recherche() {
       />
     </Grid>
     <Grid item>
-      <Button variant="contained" onClick={handleFilter} sx={{ height: 40 }}>Filtrer</Button>
+      <Button variant="contained" onClick={handleFilter} sx={{ height: 40 , mr:1 }}>Filtrer</Button>
+       <Button variant="outlined" color="primary" onClick={fetchHistorique} sx={{ height: 40 }}>
+          Actualiser
+        </Button>
     </Grid>
   </Grid>
 </Paper>
         {/* Tableau */}
+         {editSuccess && (
+                  <Box sx={{ mb: 2 }}>
+                    <Alert severity="success" variant="filled" sx={{ borderRadius: 2 }}>
+                      {editSuccess}
+                    </Alert>
+                  </Box>
+                )}
         <Paper sx={{ p: 2 }}>
          {loading ? (
   <Box sx={{ textAlign: "center", py: 3 }}>
@@ -264,11 +398,14 @@ export default function Recherche() {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell>Balaste</TableCell>
                     <TableCell>Date chargement</TableCell>
                     <TableCell>Shift</TableCell>
                     <TableCell>Wagon</TableCell>
+                    <TableCell>Type Wagon</TableCell>
                     <TableCell>Four</TableCell>
                     <TableCell>pièces</TableCell>
+                    <TableCell>Statut</TableCell>
                     <TableCell>Date Entrée</TableCell>
                     <TableCell>Date sortie estimée</TableCell>
                     <TableCell>Matricule</TableCell>
@@ -279,21 +416,58 @@ export default function Recherche() {
                   {chargements.length > 0 ? (
                     chargements.map((row) => (
                       <TableRow key={row.id}>
-                         <TableCell>{row.datetime_chargement}</TableCell>
+                        <TableCell>
+                          {row.containsBalsate ? (
+                            <Box
+                              sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: 24,
+                                height: 24,
+                                color: "red",
+                                fontSize: 20,
+                              }}
+                            >
+                              <FlagIcon fontSize="small" />
+                            </Box>
+                          ) : null}
+                        </TableCell>
+                         <TableCell>{formatDate(row.datetime_chargement)}</TableCell>
                          <TableCell>{row.shift|| "-"}</TableCell>
                         <TableCell>{row.wagon?.num_wagon || "-"}</TableCell>
+                        <TableCell>{row.type_wagon?.type_wagon || "-"}</TableCell>
                         <TableCell>{row.four?.num_four || "-"}</TableCell>
                         <TableCell>{row.details?.reduce((sum, d) => sum + d.quantite, 0) || 0}</TableCell>
-                        <TableCell>{row.date_entrer || "-"}</TableCell>
-                         <TableCell>{row.date_entrer ? (row.datetime_sortieEstime || "-") : "-"}</TableCell>
+                        <TableCell><Chip 
+                          label={row.statut} 
+                          color={getStatusColor(row.statut)}
+                          size="small"
+                        /></TableCell>
+                        <TableCell>{formatDate(row.date_entrer)}</TableCell>
+                         <TableCell>{row.date_entrer ?formatDate (row.datetime_sortieEstime) : "-"}</TableCell>
                         <TableCell>{row.user?.matricule || "-"}</TableCell>
                         <TableCell>
+                          <Box sx={{ display: 'flex' }}>
                           <Tooltip title="Voir détails">
-                            <VisibilityIcon  
+                            <IconButton  
                              sx={{ cursor: "pointer", color: "#3f51b5" }}
                               onClick={() => handleOpenModal(row ,"editer")}
-                            />
+                            >
+                              <VisibilityIcon/>
+                              </IconButton>
+                             </Tooltip>
+                             <Tooltip title="Modifier">
+                                <IconButton color="secondary" 
+                                  size="small"
+                                  onClick={() => {
+                                  setSelectedChargement(row);
+                                  setOpenEditModal(true);
+                                }}>
+                                <EditIcon />
+                              </IconButton>
                           </Tooltip>
+                          </Box>
                         </TableCell>
                       </TableRow>
                     ))
@@ -333,6 +507,36 @@ export default function Recherche() {
             />
           </Modal>
         )}
+       <ModificationChargement
+          open={openEditModal}
+          onClose={() => setOpenEditModal(false)}
+          selectedChargement={selectedChargement}
+          familles={familles}       
+          fours={fours}            
+          wagons={wagons}          
+          users={users}            
+          // onUpdate={(updated) => {
+          //   setChargements(prev =>
+          //     prev.map(c => (c.id === updated.id ? updated : c))
+          //   );
+          // }}
+          onUpdate={(updated) => {
+            // recalculer automatiquement si le wagon contient "balaste"
+            const containsBalsate = updated.details?.some(
+              d => d.famille?.nom_famille?.toLowerCase() === "balaste"
+            );
+            // mettre à jour le tableau avec la nouvelle valeur
+            setChargements(prev =>
+              prev.map(c =>
+                c.id === updated.id ? { ...updated, containsBalsate } : c
+              )
+            );
+          }}
+          onSuccessMessage={(msg) => {
+          setEditSuccess(msg);
+          setTimeout(() => setEditSuccess(false), 3000);
+        }}
+        />
     </SidebarChef>
   );
 }

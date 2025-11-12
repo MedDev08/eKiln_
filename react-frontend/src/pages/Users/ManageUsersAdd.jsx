@@ -132,7 +132,7 @@ export default function ManageUsersAdd() {
   };
 
   return (
-    <SidebarChef initialPath="/manage-users/add">
+    <SidebarChef initialPath="/settings/manage-users/add">
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
         <Typography
           variant="h4"

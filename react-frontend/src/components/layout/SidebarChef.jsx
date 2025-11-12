@@ -215,6 +215,12 @@ const NAVIGATION = [
       path: '/settings',
       children: [
         {
+          segment: 'manage-users',
+          title: 'Manage Users',
+          icon: <GroupsIcon />,
+          path: '/settings/manage-users'
+        },
+        {
           segment: 'fours',
           title: 'Fours',
           icon: <DescriptionIcon />,
@@ -232,13 +238,8 @@ const NAVIGATION = [
           icon: <DescriptionIcon />,
           path: '/settings/familles'
         },
+
       ],
-    },
-    {
-      segment: 'manage-users',
-      title: 'Manage Users',
-      icon: <GroupsIcon />,
-      path: '/manage-users'
     },
     {
       segment: 'ChargementContent',
@@ -246,18 +247,18 @@ const NAVIGATION = [
       icon: <LocalShippingIcon />,
       path: '/ChargementContent'
     },
-    {
-      segment: 'affectation',
-      title: 'Affectation des Trieurs',
-      icon: <AssignmentIcon />,
-      path:'/affectation'
-   },
-   {
-    segment: 'history',
-    title: 'History / Archives',
-    icon: <HistoryIcon />,
-    path: '/history'
-  },
+  //   {
+  //     segment: 'affectation',
+  //     title: 'Affectation des Trieurs',
+  //     icon: <AssignmentIcon />,
+  //     path:'/affectation'
+  //  },
+  //  {
+  //   segment: 'history',
+  //   title: 'History / Archives',
+  //   icon: <HistoryIcon />,
+  //   path: '/history'
+  // },
    {
     segment: 'recherche',
     title: 'Recherche',

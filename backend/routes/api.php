@@ -28,6 +28,7 @@ use App\Models\Famille;
 use App\Http\Controllers\PolyvalenceController;
 use App\Http\Controllers\AffectationController;
 use App\Http\Controllers\StatistiqueController;
+use App\Http\Controllers\TypeWagonController;
 
 Route::get('/wagons/cooking-count', [WagonController::class, 'getCookingWagonsCount']);
 Route::get('/pieces/Somme', [FamilleController::class, 'getTotalPiecesSum']);
@@ -141,6 +142,13 @@ Route::middleware('api')->group(function () {
     Route::patch('/users/{user}/toggle-active', [UserController::class, 'toggleActive']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
 });
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/type_wagons', [TypeWagonController::class, 'index']);
+    Route::post('/type_wagons', [TypeWagonController::class, 'store']);
+    Route::put('/type_wagons/{typeWagon}', [TypeWagonController::class, 'update']);
+    Route::delete('/type_wagons/{typeWagon}', [TypeWagonController::class, 'destroy']);
+});
+
 
 Route::middleware('auth:api')->group(function () {
     // Other routes...

@@ -178,7 +178,7 @@ export default function ManageUsersEdit() {
   }
 
   return (
-    <SidebarChef initialPath="/manage-users/edit">
+    <SidebarChef initialPath="/settings/manage-users/edit">
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
         <Typography
           variant="h4"

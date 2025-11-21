@@ -340,7 +340,7 @@ class ChargementController extends Controller
             }
 
             // Get fresh data
-            $f3 = Chargement::with(['wagon', 'four'])
+            $f3 = Chargement::with(['wagon', 'four', 'type_wagon'])
                 ->where('id_four', 6)
                 ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir'])
                 ->orderBy('datetime_sortieEstime', 'asc')
@@ -348,6 +348,8 @@ class ChargementController extends Controller
                 ->map(function ($chargement) {
                     return [
                         'id_chargement' => $chargement->id,
+                        'id_typeWagon' => $chargement->id_typeWagon,
+                        'color' => $chargement->type_wagon->color ?? '#cccccc',
                         'num_wag' => $chargement->wagon->num_wagon ?? 'N/A',
                         'Statut' => $chargement->statut,
                         'debut_cuisson' => $chargement->datetime_chargement,
@@ -356,7 +358,7 @@ class ChargementController extends Controller
                     ];
                 });
 
-            $f4 = Chargement::with(['wagon', 'four'])
+            $f4 = Chargement::with(['wagon', 'four', 'type_wagon'])
                 ->where('id_four', 2)
                 ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir'])
                 ->orderBy('datetime_sortieEstime', 'asc')
@@ -364,6 +366,8 @@ class ChargementController extends Controller
                 ->map(function ($chargement) {
                     return [
                         'id_chargement' => $chargement->id,
+                        'id_typeWagon' => $chargement->id_typeWagon,
+                        'color' => $chargement->type_wagon->color ?? '#cccccc',
                         'num_wag' => $chargement->wagon->num_wagon ?? 'N/A',
                         'Statut' => $chargement->statut,
                         'debut_cuisson' => $chargement->datetime_chargement,
@@ -720,7 +724,7 @@ class ChargementController extends Controller
             }
         }
 
-        $query = Chargement::with(['wagon', 'four', 'details'])
+        $query = Chargement::with(['wagon', 'four', 'details', 'type_wagon'])
             ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir', 'sorti'])
             ->orderBy('datetime_sortieEstime', 'asc');
 
@@ -758,7 +762,7 @@ class ChargementController extends Controller
                 return [
                     'id' => $chargement->id,
                     'wagon_num' => $chargement->wagon->num_wagon ?? 'N/A',
-                    'wagon_type' => $chargement->wagon->type_wagon ?? 'N/A',
+                    'wagon_type' => $chargement->type_wagon->type_wagon ?? 'N/A',
                     'four_num' => $chargement->four->num_four ?? 'N/A',
                     'total_pieces' => $chargement->details->sum('quantite'),
                     'heure_sortie' => $chargement->datetime_sortieEstime
@@ -1425,32 +1429,46 @@ class ChargementController extends Controller
                 // Récupérer uniquement les chargements de ce four
                 $chargementsDuFour = $all->where('id_four', $id_four);
                 $totalDensity = 0;
+                $detailsParFour = [];
+                // /** @var \App\Models\Chargement $chargement */
                 foreach ($chargementsDuFour as $chargement) {
                     $density_famille = 0;
                     $i = 0;
-
+                    $detailsFamilles = [];
                     foreach ($chargement->details as $detail) {
                         $key = $detail->id_famille . '_' . $chargement->id_typeWagon . '_' . $chargement->id_four;
                         $densityRecord = $densities->get($key);
 
                         if ($densityRecord && $densityRecord->density_value != 0) {
                             $density_famille += ($detail->quantite * 100) / $densityRecord->density_value;
-                            $i++;
+                            $i += $detail->quantite;
+                            // Stocker densité par famille
+                            $detailsFamilles[] = [
+                                'id_famille' => $detail->id_famille,
+                                'nom_famille' => $detail->famille->nom_famille ?? '',
+                                'density_famille' => round($density_famille, 2),
+                            ];
                         }
                     }
 
-                    $density_chargement = $i > 0 ? $density_famille / $i : 0;
+                    $density_chargement = $i > 0 ? $density_famille : 0;
                     $totalDensity += $density_chargement;
+                    $detailsParFour[] = [
+                        'id_chargement' => $chargement->id,
+                        'density_chargement' => round($density_chargement, 2),
+                        'familles' => $detailsFamilles,
+                        'totale_pieces' => $i,
+                    ];
                 }
                 // Compter les wagons Balaste seul ou Balaste + Couvercle
-                $wagonsBalasteCouvercle = $all->filter(function ($chargement) {
+                $wagonsBalasteCouvercle = $chargementsDuFour->filter(function ($chargement) {
                     // On ne regarde que les wagons qui contiennent Balaste
                     $familles = $chargement->details->pluck('famille.nom_famille')
                         ->map(fn($f) => strtolower($f))
                         ->unique();
                     return $familles->contains('balaste') && $familles->every(fn($f) => in_array($f, ['balaste', 'couvercles']));
                 })->count();
-                $totalChargements = $all->count();
+                $totalChargements = $chargementsDuFour->count();
                 // Calculer la densité finale en excluant ces wagons
                 $totalChargementsPourDensity = $totalChargements - $wagonsBalasteCouvercle;
                 $densite_finale = $totalChargementsPourDensity > 0
@@ -1463,14 +1481,10 @@ class ChargementController extends Controller
                 $densityResults[] = [
                     'id_four' => $id_four,
                     'num_four' => $num_four,
-                    'densite_finale' => $densite_finale
+                    'densite_finale' => $densite_finale,
+                    'details' => $detailsParFour,
                 ];
             }
-            // $densityResults[] = [
-            //     'num_for' => $chargement->id,
-            //     'densite_finale' => $densite_finale
-            // ];
-
             $totalBalasteWagons = $all->sum(
                 fn($c) =>
                 $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'balaste')->count()
@@ -1505,7 +1519,6 @@ class ChargementController extends Controller
                     'balastes' => $totalbalaste,
                     'couvercles'  => $totalcouvercles,
                     'pieces_sans_balaste_couvercle' => $totalPiecesSansBalasteCouvercle,
-                    //'densite_finale' => $densite_finale,
                     'densite' => $densite,
                     'totalChargementsPourDensity' => $totalChargementsPourDensity
                 ],
@@ -1535,5 +1548,27 @@ class ChargementController extends Controller
             'success' => true,
             'data' => $details
         ]);
+    }
+    public function destroy($id)
+    {
+        $chargement = Chargement::findOrFail($id);
+        $chargement->delete(); // Soft delete
+        return response()->json(['message' => 'Supprimé avec succès']);
+    }
+    public function archives()
+    {
+        $archives = Chargement::onlyTrashed()
+            ->with(['user', 'wagon', 'four', 'details.famille', 'type_wagon'])
+            ->orderBy('deleted_at', 'desc')
+            ->get();
+
+        return response()->json($archives);
+    }
+    public function restore($id)
+    {
+        $chargement = Chargement::onlyTrashed()->findOrFail($id);
+        $chargement->restore();
+
+        return response()->json(['message' => 'Chargement restauré avec succès']);
     }
 }

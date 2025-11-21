@@ -34,6 +34,9 @@ import ChargementDetailsModal from "./Chargement/ChargementDetailsModal";
 import ModificationChargement from "./ModificationChargement";
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import DeleteIcon from "@mui/icons-material/Delete";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+
 
 const StatCard = ({ title, value, icon, subtitle  }) => {
   return (
@@ -131,6 +134,7 @@ export default function Recherche() {
     densite_finale:0 
   });
   const [density,setDensity]= useState([]);
+  // const [densityFamilles,setDensityFamilles]= useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);     
   const [rowsPerPage, setRowsPerPage] = useState(10); 
@@ -145,7 +149,9 @@ export default function Recherche() {
   const [users, setUsers] = useState([]);
   const [editSuccess, setEditSuccess] = useState(false);
   const [type_wagon, settype_wagon] = useState([]);
-
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [chargementToDelete, setChargementToDelete] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState("");
 
   const [searchParams, setSearchParams] = useState({
     matricule: "",
@@ -233,6 +239,21 @@ useEffect(() => {
 
     setChargements(wagonsWithDetails);
     setDensity(res.data.densite_par_four)
+    // const allDensityFamilles = [];
+    //   res.data.densite_par_four.forEach(four => {
+    //     four.details.forEach(ch => {
+    //       ch.familles.forEach(fam => {
+    //         allDensityFamilles.push({
+    //           id_four: four.id_four,
+    //           id_chargement: ch.id_chargement,
+    //           id_famille: fam.id_famille,
+    //           density_famille: fam.density_famille
+    //         });
+    //       });
+    //     });
+    //   });
+    //  console.log("allDensityFamilles", allDensityFamilles);
+    //  setDensityFamilles(allDensityFamilles);
      setTotal(res.data.data.total || 0);        // ou last_page*rowsPerPage si total n'existe pas
      setTotaux(res.data.totaux || { chargements: 0,
        pieces: 0 ,
@@ -274,6 +295,34 @@ useEffect(() => {
     // const interval = setInterval(fetchHistorique, 60000);
     // return () => clearInterval(interval);
   }, [searchParams, page, rowsPerPage]);
+    const handleDeleteClick = (chargement) => {
+      setChargementToDelete(chargement);
+      setDeleteDialogOpen(true);
+    };
+    const confirmDelete = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        await axios.delete(
+          `http://localhost:8000/api/chargements/${chargementToDelete.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // enlever l’élément du tableau après suppression
+        setChargements(prev =>
+          prev.filter((c) => c.id !== chargementToDelete.id)
+        );
+
+        setDeleteDialogOpen(false);
+        setChargementToDelete(null);
+        setDeleteSuccess("Le chargement a été supprimé avec succès.");
+        setTimeout(() => setDeleteSuccess(""), 3000);
+
+      } catch (error) {
+        console.error("Erreur suppression :", error);
+      }
+    };
+
 
   const handleFilter = () => fetchHistorique();
 
@@ -404,6 +453,17 @@ useEffect(() => {
                     </Alert>
                   </Box>
                 )}
+          {deleteSuccess && (
+                  <Box sx={{ mb: 2 }}>
+                    <Alert
+                      severity="success"
+                      variant="filled"
+                      sx={{ borderRadius: 2 }}
+                    >
+                      {deleteSuccess}
+                    </Alert>
+                  </Box>
+                )}
         <Paper sx={{ p: 2 }}>
          {loading ? (
   <Box sx={{ textAlign: "center", py: 3 }}>
@@ -414,7 +474,7 @@ useEffect(() => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Balaste</TableCell>
+                    <TableCell>    </TableCell>
                     <TableCell>Date chargement</TableCell>
                     <TableCell>Shift</TableCell>
                     <TableCell>Wagon</TableCell>
@@ -424,6 +484,7 @@ useEffect(() => {
                     <TableCell>Statut</TableCell>
                     <TableCell>Date Entrée</TableCell>
                     <TableCell>Date sortie estimée</TableCell>
+                    <TableCell>densité</TableCell>
                     <TableCell>Matricule</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
@@ -462,6 +523,14 @@ useEffect(() => {
                         /></TableCell>
                         <TableCell>{formatDate(row.date_entrer)}</TableCell>
                          <TableCell>{row.date_entrer ?formatDate (row.datetime_sortieEstime) : "-"}</TableCell>
+                         <TableCell>{density.length > 0
+                          ? (() => {
+                              const densiteFour = density.find(f => f.id_four === row.id_four);
+                              const detailChargement = densiteFour.details.find(d => d.id_chargement === row.id);
+                              return detailChargement ? detailChargement.density_chargement : "-";
+                            })()
+                          : "-"}
+                        </TableCell>
                         <TableCell>{row.user?.matricule || "-"}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex' }}>
@@ -482,6 +551,15 @@ useEffect(() => {
                                 }}>
                                 <EditIcon />
                               </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Supprimer">
+                            <IconButton
+                              color="error"
+                              size="small"
+                              onClick={() => handleDeleteClick(row)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
                           </Tooltip>
                           </Box>
                         </TableCell>
@@ -531,7 +609,8 @@ useEffect(() => {
           fours={fours}            
           wagons={wagons} 
           type_wagon={type_wagon}        
-          users={users}            
+          users={users}  
+          // densityFamilles={densityFamilles}          
           // onUpdate={(updated) => {
           //   setChargements(prev =>
           //     prev.map(c => (c.id === updated.id ? updated : c))
@@ -554,6 +633,66 @@ useEffect(() => {
           setTimeout(() => setEditSuccess(false), 3000);
         }}
         />
-    </SidebarChef>
+        <Modal open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              bgcolor: "white",
+              p: 4,
+              borderRadius: 3,
+              width: 380,
+              textAlign: "center",
+              boxShadow: 24,
+            }}
+          >
+            {/* Icône du point d'exclamation */}
+            <Box 
+              sx={{
+                bgcolor: "#fdecea",
+                width: 70,
+                height: 70,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 2
+              }}
+            >
+              <WarningAmberIcon sx={{ fontSize: 45, color: "#d32f2f" }} />
+            </Box>
+
+            <Typography variant="h6" fontWeight="bold" mb={1}>
+              Confirmer la suppression
+            </Typography>
+
+            <Typography color="text.secondary" mb={3}>
+              Voulez-vous vraiment supprimer ce chargement ?
+            </Typography>
+
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => setDeleteDialogOpen(false)}
+                sx={{ width: "45%" }}
+              >
+                Annuler
+              </Button>
+
+              <Button
+                variant="contained"
+                color="error"
+                onClick={confirmDelete}
+                sx={{ width: "45%" }}
+              >
+                Supprimer
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
+  </SidebarChef>
   );
 }

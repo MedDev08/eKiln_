@@ -145,6 +145,7 @@ Route::middleware('api')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/type_wagons', [TypeWagonController::class, 'index']);
     Route::post('/type_wagons', [TypeWagonController::class, 'store']);
+    Route::get('/type_wagons/{typeWagon}', [TypeWagonController::class, 'show']);
     Route::put('/type_wagons/{typeWagon}', [TypeWagonController::class, 'update']);
     Route::delete('/type_wagons/{typeWagon}', [TypeWagonController::class, 'destroy']);
 });
@@ -164,4 +165,9 @@ Route::post('/chargements/valider/{id}', [ChargementController::class, 'valider'
 Route::get('/chargements/last-date/{idFour}', [ChargementController::class, 'getLastDateEntrer']);
 Route::get('/chargements/recherche', [ChargementController::class, 'getrecherche']);
 Route::post('/chargements/details-batch', [ChargementController::class, 'getBatchDetails']);
+Route::delete('/chargements/{id}', [ChargementController::class, 'destroy']);
+Route::get('/chargements/archives', [ChargementController::class, 'archives']);
+Route::post('/chargements/{id}/restore', [ChargementController::class, 'restore']);
+
+
 // });

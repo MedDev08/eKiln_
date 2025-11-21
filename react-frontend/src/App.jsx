@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
-import Dashboard from './pages/Dashboard';
+// import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/Users/UserManagement';
 import Enfourneur from './pages/Chargement/Enfourneur';
 import ChefDashboard from './pages/ChefDashboard';
@@ -30,12 +30,16 @@ import EnfourneurTable from './pages/EnfourneurTable';
 import AffectationContent from './pages/AffectationContent';
 import Cuiseur from './pages/Cuiseur';
 import Recherche from './pages/Recherche';
+import TypeWagons from './pages/Wagons/TypeWagons';
+import TypeWagonEdit from './pages/Wagons/TypeWagonEdit';
+import TypeWagonAdd from './pages/Wagons/TypeWagonAdd';
+import ArchiveChargements from './pages/Chargement/ArchiveChargements';
 function App() {
   return (
     <AuthProvider>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
         <Route path="/users" element={<UserManagement />} />
         <Route path="/Enfourneur" element={<Enfourneur />} />
         <Route path="/ChefDashboard" element={<ChefDashboard />} />
@@ -45,6 +49,9 @@ function App() {
         <Route path="/settings/manage-users/edit/:id" element={<ManageUsersEdit />} />
         <Route path="/settings/fours" element={<Fours />} />
         <Route path="/settings/wagons" element={<Wagons />} />
+        <Route path="/settings/type-wagons" element={<TypeWagons/>}/>
+        <Route path="/settings/type-wagons/edit/:id" element={<TypeWagonEdit/>}/>
+        <Route path="/settings/type-wagons/add" element={<TypeWagonAdd/>}/>
         <Route path="/settings/wagons/add" element={<WagonAdd />} />
         <Route path="/settings/wagons/edit/:id" element={<WagonEdit />} />
         <Route path="/wagon_visualization" element={<Wagon_Visualization />} />
@@ -63,6 +70,7 @@ function App() {
         <Route path="/affectation" element={<AffectationContent/>}/>
         <Route path="/cuiseur" element={<Cuiseur />} />
         <Route path="/recherche" element={<Recherche/>}/>
+        <Route path="/archives-chargements" element={<ArchiveChargements />} />
       </Routes>
     </AuthProvider>
   );

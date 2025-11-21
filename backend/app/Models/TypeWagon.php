@@ -2,12 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class TypeWagon extends Model
 {
-    use HasFactory;
     protected $table = 'type_wagon';
-    protected $fillable = ['type_wagon', 'description'];
+
+    protected $fillable = [
+        'type_wagon',
+        'description',
+        'color'
+    ];
+
+    public function chargements()
+    {
+        return $this->hasMany(Chargement::class, 'id_typeWagon');
+    }
 }

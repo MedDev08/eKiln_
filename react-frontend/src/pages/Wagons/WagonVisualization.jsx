@@ -40,14 +40,15 @@ const FourTunnel = styled('div')({
     background: 'linear-gradient(to bottom, #f8f9fa, #e9ecef)',
 });
 
-const WagonPosition = styled('div')(({ progress, status }) => ({
+const WagonPosition = styled('div')(({ progress,type_wagon
+ }) => ({
     position: 'absolute',
     left: `${progress}%`,
     top: '50%',
     transform: 'translate(-50%, -50%)',
     width: '45px',
     height: '70px',
-    backgroundColor: getStatusColor(status),
+   backgroundColor: type_wagon,
     border: '2px solid #2c3e50',
     borderRadius: '8px',
     display: 'flex',
@@ -62,26 +63,12 @@ const WagonPosition = styled('div')(({ progress, status }) => ({
         zIndex: 10,
         boxShadow: '0 5px 15px rgba(0, 0, 0, 0.2)',
     },
-    // Animation pour les wagons en cuisson
-    ...(status?.toLowerCase() === 'en cuisson' && {
-        animation: 'pulse 2s infinite',
-    }),
+    // // Animation pour les wagons en cuisson
+    // ...(status?.toLowerCase() === 'en cuisson' && {
+    //     animation: 'pulse 2s infinite',
+    // }),
 }));
 
-const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-        case 'en attente': 
-            return '#f39c12'; // Orange plus vif
-        case 'en cuisson': 
-            return '#2ecc71'; // Vert plus vif
-        case 'prêt à sortir': 
-            return '#3498db'; // Bleu vif
-        case 'sorti': 
-            return '#95a5a6'; // Gris plus doux
-        default: 
-            return '#bdc3c7'; // Gris clair
-    }
-};
 
 const formatDuration = (milliseconds) => {
     const totalSeconds = Math.floor(milliseconds / 1000);
@@ -212,7 +199,7 @@ const WagonVisualization = () => {
         setFourData(prev => ({ ...prev, loading: true }));
         fetchChargements();
     };
-
+    
     // Calculer la progression de la cuisson pour un wagon
     const calculateProgress = (chargement) => {
         if (!chargement.debut_cuisson || !chargement.FinCuissonEstimee) return 0;
@@ -262,9 +249,10 @@ const WagonVisualization = () => {
                         >
                             <WagonPosition 
                                 progress={progress} 
-                                status={chargement.Statut}
+                                type_wagon={chargement.color}
                                 onClick={() => handleBoxClick(chargement)}
-                            >
+                            >     
+                               {console.log("TEST ", chargement.color)}
                                 <div style={{ fontSize: '12px', fontWeight: 'bold' }}>
                                     {chargement.num_wag}
                                 </div>

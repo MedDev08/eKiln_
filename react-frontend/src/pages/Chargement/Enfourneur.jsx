@@ -28,7 +28,10 @@ import {
   Grid,
   Divider,
   Alert,
-  Autocomplete
+  Autocomplete,
+  CardContent,
+  Card,
+  Chip 
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -293,6 +296,15 @@ useEffect(() => {
       }
     }
   };
+//  const getTypeColor = (type) => {
+//   switch(type) {
+//     case 'SP': return '#1976d2';    // bleu
+//     case '1/2 SP': return '#9c27b0'; // violet
+//     case 'RD': return '#388e3c';    // vert
+//     case 'DP': return '#d32f2f';    // rouge
+//     default: return 'inherit';       // gris
+//   }
+// };
   const fourRef = useRef(null);
   const [fourOpen, setFourOpen] = useState(false);
 
@@ -313,6 +325,7 @@ useEffect(() => {
     localStorage.removeItem("user");
     window.location.href = "/";
   };
+  const role = user?.role?.toLowerCase();
 
   return (
     <>
@@ -329,6 +342,7 @@ useEffect(() => {
           >
             {recapLoading ? "Chargement..." : showRecap ? "Masquer" : "Mes Chargements"}
           </Button>
+            {role === "enfourneur" && (
           <Button 
             color="inherit" 
             startIcon={<LogoutIcon />} 
@@ -336,6 +350,7 @@ useEffect(() => {
           >
             Déconnexion
           </Button>
+        )}
         </Toolbar>
       </AppBar>
 
@@ -466,31 +481,74 @@ useEffect(() => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} md={6} width="130px">
-                  <Autocomplete
-                    options={typeWagons}
-                    getOptionLabel={(tw) => tw.type_wagon}
-                    value={typeWagons.find(tw => tw.id === selectedTypeWagon) || null}
-                    onChange={(event, newValue) => {
-                      setSelectedTypeWagon(newValue ? newValue.id : null);
+              <Grid item xs={12} md={6} width="130px">
+               <Autocomplete
+                  options={typeWagons}
+                  getOptionLabel={(tw) => tw.type_wagon}
+                  value={typeWagons.find(tw => tw.id === selectedTypeWagon) || null}
+                  onChange={(event, newValue) => {
+                    setSelectedTypeWagon(newValue ? newValue.id : null);
+                  }}
+                  //  OPTION BACKGROUND
+               renderOption={(props, option) => {
+                const color = option.color;
+                const isColored = color !== "inherit";
+
+                return (
+                  <li
+                    {...props}
+                    style={{
+                      backgroundColor: isColored ? color : "white",
+                      color: isColored ? "white" : "black",
+                      borderRadius: "4px",
+                      margin: "3px 0"
                     }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Type Wagon"
-                        margin="normal"
-                        required
-                      />
-                    )}
-                    open={typeWagonOpen}
-                    onOpen={() => setTypeWagonOpen(true)}
-                    onClose={() => setTypeWagonOpen(false)}
-                    sx={{
-                      width: '130px',
-                      // visibility: Number(selectedFour) === 6 ? 'visible' : 'hidden' // invisible mais espace réservé
+                  >
+                    {option.type_wagon}
+                  </li>
+                );
+               }}
+              renderInput={(params) => {
+                const selected = typeWagons.find(tw => tw.id === selectedTypeWagon);
+                return (
+                  <TextField
+                    {...params}
+                    label="Type Wagon"
+                    required
+                    margin="normal"
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: selected ? (() => {
+                        const bg = selected.color;
+                        const isColored = bg !== "inherit";
+
+                        return (
+                          <Chip
+                            label={selected.type_wagon}
+                            size="small"
+                            sx={{
+                              backgroundColor: isColored ? bg : "white",
+                              color: isColored ? "white" : "black",
+                              fontWeight: "bold",
+                              border: isColored ? "none" : "1px solid #ccc"
+                            }}
+                          />
+                        );
+                      })() : null,
+                      inputProps: {
+                        ...params.inputProps,
+                        value: "" // garde ton comportement
+                      }
                     }}
                   />
-                </Grid>
+                );
+              }}
+              open={typeWagonOpen}
+              onOpen={() => setTypeWagonOpen(true)}
+              onClose={() => setTypeWagonOpen(false)}
+              sx={{ width: "130px" }}
+                />
+            </Grid>
                 {/* Paper Fields */}
                 <Grid container spacing={3} justifyContent="flex-end" minWidth={"50%"}>
                   <Grid item xs={12} md={4}>

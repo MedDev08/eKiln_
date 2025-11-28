@@ -25,6 +25,7 @@ export default function ChargementDetailsModal({
   chargement,
   onValidate,
   getStatusColor,
+  // densityFamilles 
 }) {
  // --- Ici on définit la fonction pour calculer la date initiale ---
 const getInitialDate = async () => {
@@ -73,6 +74,13 @@ const getInitialDate = async () => {
 
 // --- Initialiser le state ---
 const [validationDate, setValidationDate] = useState(null);
+const [anneauxCoche, setAnneauxCoche] = useState(false);
+useEffect(() => {
+  if (!chargement) return;
+
+// Si la relation existe et n'est pas null, checkbox cochée
+  setAnneauxCoche(chargement.anneaux );
+}, [chargement]);
 
 // --- Charger la date initiale une fois que le chargement est disponible ---
 useEffect(() => {
@@ -121,7 +129,7 @@ useEffect(() => {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">
-          Valider le chargement #{chargement.id}
+          le chargement #{chargement.id}
         </Typography>
         <IconButton onClick={onClose}>
           <CloseIcon />
@@ -176,23 +184,31 @@ useEffect(() => {
             <TableRow>
               <TableCell>Famille</TableCell>
               <TableCell align="right">Quantité</TableCell>
+               <TableCell align="right">Densité (%)</TableCell>
             </TableRow>
           </TableHead>
-          <TableBody>
-            {chargement.details && chargement.details.length > 0 ? (
-              chargement.details.map((detail, index) => (
+       <TableBody>
+          {chargement.details && chargement.details.length > 0 ? (
+            chargement.details.map((detail, index) => {
+              return (
                 <TableRow key={index}>
                   <TableCell>{detail.famille?.nom_famille || "N/A"}</TableCell>
                   <TableCell align="right">{detail.quantite}</TableCell>
+                  {/* <TableCell align="right">
+                  {detail.famille && densityFamilles.find(
+                    f => f.id_chargement === chargement.id && f.id_famille === detail.famille.id_famille
+                  )?.density_famille || "-"}
+                </TableCell> */}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={2} align="center">
-                  Aucune famille associée
+              );
+            })
+          ) : (
+            <TableRow>
+              <TableCell colSpan={2} align="center">
+                Aucune famille associée
                 </TableCell>
-              </TableRow>
-            )}
+            </TableRow>
+          )}
           </TableBody>
         </Table>
       </TableContainer>
@@ -202,6 +218,36 @@ useEffect(() => {
       {/* Modification de l'heure */}
       {["admin","cuiseur"].includes(user?.role?.toLowerCase()) && location.pathname.toLowerCase().includes("/cuiseur") &&(
      <>
+      <Box display="flex" alignItems="center" mb={2}>
+       <input
+          type="checkbox"
+          checked={anneauxCoche}
+         onChange={async (e) => {
+          const newValue = e.target.checked;
+
+          const token = localStorage.getItem("token");
+
+         const response = await fetch(
+          `http://127.0.0.1:8000/api/chargements/${chargement.id}/anneaux`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ coche: newValue }),
+          }
+        );
+
+        const data = await response.json();
+       // Mettre à jour le state correctement
+       setAnneauxCoche(newValue);
+       // Mettre à jour l’objet chargement pour refléter la relation
+       chargement.anneaux = newValue ? data : null;
+         }}
+        />
+        <Typography ml={1}><strong>Anneaux Bullers</strong></Typography>
+      </Box>
       <Typography sx={{ mb: 1 }}>Heure d’entrée :</Typography>
       <Grid container spacing={2}>
       <Grid item xs={6}>

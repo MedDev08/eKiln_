@@ -14,6 +14,7 @@ use Carbon\CarbonInterval;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use App\Models\AnneauxBullers;
 
 class ChargementController extends Controller
 {
@@ -359,7 +360,7 @@ class ChargementController extends Controller
                 });
 
             $f4 = Chargement::with(['wagon', 'four', 'type_wagon'])
-                ->where('id_four', 2)
+                ->where('id_four', 7)
                 ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir'])
                 ->orderBy('datetime_sortieEstime', 'asc')
                 ->get()
@@ -1294,7 +1295,7 @@ class ChargementController extends Controller
     {
         try {
             // On récupère tout ce qui est "en attente" 
-            $chargementsEnAttente = Chargement::with(['user', 'wagon', 'four', 'details.famille'])
+            $chargementsEnAttente = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'anneaux'])
                 ->where('statut', 'en attente')
                 ->orderBy('datetime_chargement', 'asc')
                 ->get();
@@ -1303,7 +1304,7 @@ class ChargementController extends Controller
             $chargementsEnCuisson = collect();
             //  Pour chaque four, on récupère les 10 derniers chargements en cuisson
             foreach ($foursIds as $idFour) {
-                $last10 = Chargement::with(['user', 'wagon', 'four', 'details.famille'])
+                $last10 = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'anneaux'])
                     ->where('statut', 'en cuisson')
                     ->where('id_four', $idFour)
                     ->orderBy('date_entrer', 'desc')
@@ -1560,7 +1561,20 @@ class ChargementController extends Controller
         $archives = Chargement::onlyTrashed()
             ->with(['user', 'wagon', 'four', 'details.famille', 'type_wagon'])
             ->orderBy('deleted_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($chargement) {
+
+                // Récupérer l'audit correspondant à la suppression
+                $audit = $chargement->audits()
+                    ->where('event', 'deleted')
+                    ->latest()
+                    ->first();
+
+                // Ajouter le user qui a supprimé
+                $chargement->deleted_by_user = $audit ? $audit->user : null;
+
+                return $chargement;
+            });
 
         return response()->json($archives);
     }
@@ -1570,5 +1584,22 @@ class ChargementController extends Controller
         $chargement->restore();
 
         return response()->json(['message' => 'Chargement restauré avec succès']);
+    }
+    public function setAnneaux(Request $request, $id_chargement)
+    {
+        if ($request->coche) {
+            // Coche = créer si n'existe pas
+            $anneau = AnneauxBullers::firstOrCreate(
+                [
+                    'id_chargement' => $id_chargement
+                ]
+            );
+            return response()->json($anneau);
+        } else {
+            // Si décoché = supprimer
+            AnneauxBullers::where('id_chargement', $id_chargement)->delete();
+
+            return response()->json(['deleted' => true]);
+        }
     }
 }

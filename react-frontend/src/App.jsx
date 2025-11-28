@@ -34,6 +34,8 @@ import TypeWagons from './pages/Wagons/TypeWagons';
 import TypeWagonEdit from './pages/Wagons/TypeWagonEdit';
 import TypeWagonAdd from './pages/Wagons/TypeWagonAdd';
 import ArchiveChargements from './pages/Chargement/ArchiveChargements';
+import AuditLogs from './pages/AuditLogs';
+import AnneauxPage from './pages/AnneauxPage';
 function App() {
   return (
     <AuthProvider>
@@ -71,6 +73,8 @@ function App() {
         <Route path="/cuiseur" element={<Cuiseur />} />
         <Route path="/recherche" element={<Recherche/>}/>
         <Route path="/archives-chargements" element={<ArchiveChargements />} />
+        <Route path='/auditlogs' element={<AuditLogs/>}/>
+        <Route path='/anneaux' element={<AnneauxPage/>}/>
       </Routes>
     </AuthProvider>
   );

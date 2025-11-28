@@ -20,6 +20,7 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import ChargementDetailsModal from "./Chargement/ChargementDetailsModal";
 import SidebarChef from "../components/layout/SidebarChef";
+import { CircleOutlined } from '@mui/icons-material'; 
 
 function Cuiseur() {
   const [wagonsParFour, setWagonsParFour] = useState({});
@@ -71,7 +72,7 @@ function Cuiseur() {
 
   useEffect(() => {
     fetchWagons();
-    const interval = setInterval(fetchWagons, 60000); // refresh toutes les 60s
+    const interval = setInterval(fetchWagons, 120000); // refresh toutes les 60s
     return () => clearInterval(interval);
   }, []);
   //  Formatage des dates
@@ -112,7 +113,7 @@ function Cuiseur() {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    // Fermer la modal d'abord
+    // Fermer la modal d'abord 
     setOpenModal(false);
     setSelectedChargement(null);
 
@@ -123,6 +124,7 @@ function Cuiseur() {
     console.error(error.response?.data || error.message);
   }
 };
+  const boxStyle = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, fontSize: 20 };
   //  Rendu du tableau
   const renderTable = (chargements, validated = false) => (
     <Paper sx={{ mt: 2 }}>
@@ -130,6 +132,7 @@ function Cuiseur() {
         <Table>
           <TableHead>
             <TableRow>
+              {validated && <TableCell> </TableCell>}
               <TableCell>Date Chargement</TableCell>
               <TableCell>Wagon</TableCell>
               <TableCell>Four</TableCell>
@@ -142,6 +145,15 @@ function Cuiseur() {
             {chargements.length > 0 ? (
               chargements.map((c) => (
                 <TableRow key={c.id}>
+                  {validated && (
+                  <TableCell>
+                   {validated && c.anneaux && (
+                      <Box sx={{ ...boxStyle, color: "gold" }}>
+                        <CircleOutlined   fontSize="small" />
+                      </Box>
+                    )}
+                  </TableCell>
+                )}
                   <TableCell>{formatDate(c.datetime_chargement)}</TableCell>
                   <TableCell>{c.wagon?.num_wagon || "-"}</TableCell>
                   <TableCell>Four{c.four?.num_four || "-"}</TableCell>

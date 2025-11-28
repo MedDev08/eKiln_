@@ -30,6 +30,7 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import FlagIcon from "@mui/icons-material/Flag";
+import { CircleOutlined } from '@mui/icons-material'; 
 import ChargementDetailsModal from "./Chargement/ChargementDetailsModal"; 
 import ModificationChargement from "./ModificationChargement";
 import { format, parseISO } from 'date-fns';
@@ -152,6 +153,7 @@ export default function Recherche() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chargementToDelete, setChargementToDelete] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState("");
+  const [anneaux, setAnneaux] = useState([]);
 
   const [searchParams, setSearchParams] = useState({
     matricule: "",
@@ -199,9 +201,9 @@ export default function Recherche() {
     setFours(foursRes.data);
     setWagons(wagonsRes.data.data);
     setUsers(usersRes.data.data);
-    console.log("users",usersRes.data.data);
+    // console.log("users",usersRes.data.data);
     settype_wagon(typeWagonsRes.data);
-    console.log("type_wagon",typeWagonsRes.data);
+    // console.log("type_wagon",typeWagonsRes.data);
 
   } catch (err) {
     console.error("Erreur fetchInitialData :", err);
@@ -289,9 +291,21 @@ useEffect(() => {
       setLoading(false);
     }
   };
-
+  const fetchAnneaux = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:8000/api/all-chargement-ids", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAnneaux(res.data.ids); // stocke tous les IDs de chargement
+      console.log("id_chargemet",res.data.ids);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   useEffect(() => {
     fetchHistorique();
+    fetchAnneaux();
     // const interval = setInterval(fetchHistorique, 60000);
     // return () => clearInterval(interval);
   }, [searchParams, page, rowsPerPage]);
@@ -322,9 +336,12 @@ useEffect(() => {
         console.error("Erreur suppression :", error);
       }
     };
+  const boxStyle = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, fontSize: 20 };
 
-
-  const handleFilter = () => fetchHistorique();
+  const handleFilter = () => {
+    fetchHistorique();
+    fetchAnneaux();
+  };
 
   return (
     <SidebarChef>
@@ -493,24 +510,21 @@ useEffect(() => {
                   {chargements.length > 0 ? (
                     chargements.map((row) => (
                       <TableRow key={row.id}>
-                        <TableCell>
-                          {row.containsBalsate ? (
-                            <Box
-                              sx={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                width: 24,
-                                height: 24,
-                                color: "red",
-                                fontSize: 20,
-                              }}
-                            >
+                       <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          {anneaux.includes(row.id) && (
+                            <Box sx={{ ...boxStyle, color: "gold" }}>
+                              <CircleOutlined fontSize="small" />
+                            </Box>
+                          )}
+                          {row.containsBalsate && (
+                            <Box sx={{ ...boxStyle, color: "red" }}>
                               <FlagIcon fontSize="small" />
                             </Box>
-                          ) : null}
+                          )}
+                        </Box>
                         </TableCell>
-                         <TableCell>{formatDate(row.datetime_chargement)}</TableCell>
+                        <TableCell>{formatDate(row.datetime_chargement)}</TableCell>
                          <TableCell>{row.shift|| "-"}</TableCell>
                         <TableCell>{row.wagon?.num_wagon || "-"}</TableCell>
                         <TableCell>{row.type_wagon?.type_wagon || "-"}</TableCell>

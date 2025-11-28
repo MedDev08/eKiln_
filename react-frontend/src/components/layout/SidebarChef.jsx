@@ -19,7 +19,9 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import SearchIcon from '@mui/icons-material/Search';
+import ArchiveIcon from '@mui/icons-material/Archive';
 import Cookies from 'js-cookie';
+import DonutSmallIcon from '@mui/icons-material/DonutSmall';
 
 //  Thème global
 const appTheme = createTheme({
@@ -196,11 +198,16 @@ const NAVIGATION = [
     icon: <DashboardIcon />,
     path:'/chefDashboard'
   },
-  {
-      segment: 'historique',
-      title: 'Historique Chargements',
-      icon: <HistoryIcon />,
-      path:'/historique'
+  // {
+  //     segment: 'historique',
+  //     title: 'Historique Chargements',
+  //     icon: <HistoryIcon />,
+  //     path:'/historique'
+  // },
+   { segment: 'cuiseur',
+    title: 'Chargements Four',
+    icon: <LocalFireDepartmentIcon />, 
+    path: '/cuiseur' 
   },
   {
     segment: 'WagonVisualization',
@@ -216,7 +223,7 @@ const NAVIGATION = [
       children: [
         {
           segment: 'manage-users',
-          title: 'Manage Users',
+          title: 'Users',
           icon: <GroupsIcon />,
           path: '/settings/manage-users'
         },
@@ -232,6 +239,12 @@ const NAVIGATION = [
           icon: <DescriptionIcon />,
           path: '/settings/wagons'
         },
+         {
+          segment: 'type-wagons',
+          title: 'Types de Wagons',
+          icon: <DescriptionIcon />,
+          path: '/settings/type-wagons'
+        },
         {
           segment: 'familles',
           title: 'Familles',
@@ -246,6 +259,12 @@ const NAVIGATION = [
       title: 'Chargement Wagon',
       icon: <LocalShippingIcon />,
       path: '/ChargementContent'
+    },
+    {
+    segment: 'anneaux',
+    title: 'Anneaux Bullers',
+    icon: <DonutSmallIcon />, 
+    path: '/anneaux'
     },
   //   {
   //     segment: 'affectation',
@@ -264,6 +283,18 @@ const NAVIGATION = [
     title: 'Recherche',
     icon: <SearchIcon />,
     path: '/recherche'
+  },
+  {
+  segment: 'archives-chargements',
+  title: 'Archives',
+  icon: <ArchiveIcon />,
+  path: '/archives-chargements'
+  },
+  {
+  segment:'auditlogs',
+  title: 'Audit Log',
+  icon:<ArchiveIcon/>,
+  path:'/auditlogs'
   },
   // {
   //   segment: 'team',
@@ -313,11 +344,18 @@ const NAV_CHEF = [
     icon: <DashboardIcon />,
     path: '/chefDashboard'
   },
-  { segment: 'historique',
-    title: 'Historique Chargements',
-    icon: <HistoryIcon />,
-    path: '/historique' 
-  },
+  // { segment: 'historique',
+  //   title: 'Historique Chargements',
+  //   icon: <HistoryIcon />,
+  //   path: '/historique' 
+  // },
+  //  {
+  //     segment: 'historique',
+  //     title: 'Historique Chargements',
+  //     icon: <HistoryIcon />,
+  //     path:'/historique'
+  // },
+  
   { segment: 'WagonVisualization',
     title: 'Wagon Visualization', 
     icon: <ViewModuleIcon />,
@@ -362,10 +400,22 @@ const NAV_Cuiseur= [
     icon: <LocalFireDepartmentIcon />, 
     path: '/cuiseur' 
   },
-  { segment: 'historique',
-    title: 'Historique Chargements',
-    icon: <HistoryIcon />,
-    path: '/historique' 
+  // { segment: 'historique',
+  //   title: 'Historique Chargements',
+  //   icon: <HistoryIcon />,
+  //   path: '/historique' 
+  // },
+  {
+   segment: 'anneaux',
+    title: 'Anneaux Bullers',
+    icon: <DonutSmallIcon/>, 
+    path: '/anneaux'
+  },
+   {
+      segment: 'recherche ',
+      title: 'Recherche',
+      icon: <SearchIcon />,
+      path:'/recherche'
   },
   { segment: 'WagonVisualization',
     title: 'Wagon Visualization', 
@@ -392,6 +442,64 @@ const NAV_Cuiseur= [
         },
       ]
     },
+  { segment: 'logout',
+    title: 'Déconnexion',
+    icon: <LogoutIcon color="error" /> 
+  },
+]
+const NAV_Manager= [
+   { kind: 'header',
+   title: 'Main Menu'
+  },
+   {
+    segment: 'recherche',
+    title: 'Dashboard',
+    icon: <DashboardIcon />,
+    path: '/recherche'
+  },
+  // { segment: 'historique',
+  //   title: 'Historique Chargements',
+  //   icon: <HistoryIcon />,
+  //   path: '/historique' 
+  // },
+  { segment: 'WagonVisualization',
+    title: 'Wagon Visualization', 
+    icon: <ViewModuleIcon />,
+    path: '/WagonVisualization'
+  },
+  {
+    segment: 'settings',
+    title: 'Settings',
+    icon: <SettingsApplicationsIcon />,
+    path: '/settings',
+    children: [
+      {
+        segment: 'manage-users',
+        title: 'Users',
+        icon: <GroupsIcon />,
+        path: '/settings/manage-users'
+      },
+      {
+        segment: 'fours',
+        title: 'Fours',
+        icon: <DescriptionIcon />,
+        path: '/settings/fours'
+      },
+      {
+        segment: 'wagons',
+        title: 'Wagons',
+        icon: <DescriptionIcon />,
+        path: '/settings/wagons'
+      },
+      {
+        segment: 'familles',
+        title: 'Familles',
+        icon: <DescriptionIcon />,
+        path: '/settings/familles'
+      },
+
+    ],
+  },
   { segment: 'logout',
     title: 'Déconnexion',
     icon: <LogoutIcon color="error" /> 
@@ -479,6 +587,24 @@ const SidebarChef = ({ children, window }) => {
          branding={{
           title: 'eKiln',
           homeUrl: '/cuiseur',
+        }}
+        router={router}
+        theme={appTheme}
+        window={demoWindow}
+      >
+        <CustomDashboardLayout onLogout={handleLogout}>
+          {children}
+        </CustomDashboardLayout>
+      </AppProvider>
+    );
+  }
+  if (role === "manager") {
+    return (
+      <AppProvider
+        navigation={NAV_Manager}
+         branding={{
+          title: 'eKiln',
+          homeUrl: '/recherche',
         }}
         router={router}
         theme={appTheme}

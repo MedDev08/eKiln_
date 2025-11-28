@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import '../../components/layout/FourBoxViewer.css';
 import SidebarChef from '../../components/layout/SidebarChef';
@@ -90,13 +90,28 @@ const WagonVisualization = () => {
     const [footerData, setFooterData] = useState(null);
     const [openModal, setOpenModal] = useState(false);
     const [now, setNow] = useState(new Date());
+    const [anneaux, setAnneaux] = useState([]);
 
+   
+    const fetchAnneaux = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:8000/api/all-chargement-ids", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAnneaux(res.data.ids); // stocke tous les IDs de chargement
+        console.log("id_chargemet",res.data.ids);
+      } catch (err) {
+        console.error(err);
+      }
+    };
     // Mettre à jour l'heure courante chaque minute pour les animations
     useEffect(() => {
+        fetchAnneaux();
         const timer = setInterval(() => {
             setNow(new Date());
+            fetchAnneaux();
         }, 60000); // Mise à jour chaque minute
-        
         return () => clearInterval(timer);
     }, []);
 
@@ -198,6 +213,7 @@ const WagonVisualization = () => {
         localStorage.removeItem('wagonVisualizationData');
         setFourData(prev => ({ ...prev, loading: true }));
         fetchChargements();
+        fetchAnneaux();
     };
     
     // Calculer la progression de la cuisson pour un wagon
@@ -262,7 +278,20 @@ const WagonVisualization = () => {
                                     marginTop: '5px'
                                 }}>
                                     {timeLeft}
-                                </div>
+                                </div>                      
+                                {/* Cercle doré en bas à droite si l'id est dans anneaux */}
+                                {anneaux.includes(chargement.id_chargement) && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '55px',
+                                        right: '2px',
+                                        width: '12px',
+                                        height: '12px',
+                                        borderRadius: '50%',
+                                        backgroundColor: 'gold',
+                                        border: '1px solid #fff',
+                                    }} />
+                                )}
                             </WagonPosition>
                         </Tooltip>
                     );

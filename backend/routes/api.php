@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AnneauxBullersController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('/me', function () {
@@ -29,6 +30,7 @@ use App\Http\Controllers\PolyvalenceController;
 use App\Http\Controllers\AffectationController;
 use App\Http\Controllers\StatistiqueController;
 use App\Http\Controllers\TypeWagonController;
+use App\Http\Controllers\AuditController;
 
 Route::get('/wagons/cooking-count', [WagonController::class, 'getCookingWagonsCount']);
 Route::get('/pieces/Somme', [FamilleController::class, 'getTotalPiecesSum']);
@@ -157,9 +159,6 @@ Route::middleware('auth:api')->group(function () {
 });
 Route::get('/total-pieces-by-shift', [ChargementController::class, 'getTotalPiecesByShift'])->middleware('auth:sanctum');
 Route::put('/chargements/{chargement}', [ChargementController::class, 'update']);
-// Route::middleware('auth:sanctum')->group(function () {
-//     // ... autres routes
-
 Route::get('/chargements/en-attente', [ChargementController::class, 'getWagonsEnAttente']);
 Route::post('/chargements/valider/{id}', [ChargementController::class, 'valider']);
 Route::get('/chargements/last-date/{idFour}', [ChargementController::class, 'getLastDateEntrer']);
@@ -168,6 +167,9 @@ Route::post('/chargements/details-batch', [ChargementController::class, 'getBatc
 Route::delete('/chargements/{id}', [ChargementController::class, 'destroy']);
 Route::get('/chargements/archives', [ChargementController::class, 'archives']);
 Route::post('/chargements/{id}/restore', [ChargementController::class, 'restore']);
-
-
-// });
+Route::get('/audits', [AuditController::class, 'index']);
+Route::get('/audit-types', [AuditController::class, 'types']);
+Route::post('/chargements/{id}/anneaux', [ChargementController::class, 'setAnneaux']);
+Route::get('anneaux', [AnneauxBullersController::class, 'getAnneaux']);
+Route::middleware('auth:sanctum')->post('/anneaux/{id}/mesures', [AnneauxBullersController::class, 'saveMeasures']);
+Route::get('/all-chargement-ids', [AnneauxBullersController::class, 'getAllChargementIds']);

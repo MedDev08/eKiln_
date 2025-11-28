@@ -4,11 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\BaseAuditableModel;
 use Carbon\Carbon;
 
-class Chargement extends Model
+class Chargement extends BaseAuditableModel
 {
+    use SoftDeletes;
     protected $fillable = ['id_user', 'id_wagon', 'id_four', 'id_typeWagon', 'statut', 'datetime_sortieEstime'];
+    protected $dates = ['deleted_at'];
     protected static function booted()
     {
         static::creating(function ($chargement) {
@@ -59,6 +63,10 @@ class Chargement extends Model
     public function details()
     {
         return $this->hasMany(DetailChargement::class, 'id_chargement');
+    }
+    public function anneaux()
+    {
+        return $this->hasOne(AnneauxBullers::class, 'id_chargement', 'id');
     }
     protected $primaryKey = 'id';
     public $incrementing = true;

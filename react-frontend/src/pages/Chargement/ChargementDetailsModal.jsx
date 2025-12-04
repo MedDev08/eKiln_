@@ -102,6 +102,29 @@ useEffect(() => {
     newDate.setMinutes(minutes);
     setValidationDate(newDate);
   };
+const updateAnneaux = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(
+      `http://127.0.0.1:8000/api/chargements/${chargement.id}/anneaux`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ coche: anneauxCoche }),
+      }
+    );
+
+    const data = await response.json();
+    // Mettre à jour l’objet chargement pour refléter la relation
+    chargement.anneaux = anneauxCoche ? data : null;
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour des anneaux :", error);
+  }
+};
+
 
   const formatDate = (dateString) =>
     format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: fr });
@@ -141,6 +164,16 @@ useEffect(() => {
         <Grid item xs={6}>
           <Typography variant="subtitle2">Wagon :</Typography>
           <Typography>{chargement.wagon?.num_wagon || "N/A"}</Typography>
+        </Grid>
+        <Grid item xs={6}>
+        <Typography variant="subtitle2">Type Wagon :</Typography>
+          <Chip label={chargement.type_wagon?.type_wagon || 'N/A'} 
+          sx={{backgroundColor: chargement.type_wagon?.color || '#ccc',
+              color: '#fff', 
+              fontWeight: 'bold'
+            }}
+            size="small"
+          />          
         </Grid>
         <Grid item xs={6}>
           <Typography variant="subtitle2">Four :</Typography>
@@ -222,29 +255,7 @@ useEffect(() => {
        <input
           type="checkbox"
           checked={anneauxCoche}
-         onChange={async (e) => {
-          const newValue = e.target.checked;
-
-          const token = localStorage.getItem("token");
-
-         const response = await fetch(
-          `http://127.0.0.1:8000/api/chargements/${chargement.id}/anneaux`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ coche: newValue }),
-          }
-        );
-
-        const data = await response.json();
-       // Mettre à jour le state correctement
-       setAnneauxCoche(newValue);
-       // Mettre à jour l’objet chargement pour refléter la relation
-       chargement.anneaux = newValue ? data : null;
-         }}
+          onChange={(e) => setAnneauxCoche(e.target.checked)}
         />
         <Typography ml={1}><strong>Anneaux Bullers</strong></Typography>
       </Box>
@@ -285,7 +296,10 @@ useEffect(() => {
         <Button
           variant="contained"
           color="success"
-          onClick={() => onValidate(validationDate)}
+         onClick={async () => {
+        await updateAnneaux(); // Mise à jour des anneaux
+        onValidate(validationDate); // Puis validation du chargement
+        }}
         >
           Valider
         </Button>

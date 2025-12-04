@@ -20,7 +20,7 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import ChargementDetailsModal from "./Chargement/ChargementDetailsModal";
 import SidebarChef from "../components/layout/SidebarChef";
-import { CircleOutlined } from '@mui/icons-material'; 
+import { Circle } from '@mui/icons-material'; 
 
 function Cuiseur() {
   const [wagonsParFour, setWagonsParFour] = useState({});
@@ -149,7 +149,7 @@ function Cuiseur() {
                   <TableCell>
                    {validated && c.anneaux && (
                       <Box sx={{ ...boxStyle, color: "gold" }}>
-                        <CircleOutlined   fontSize="small" />
+                        <Circle fontSize="small" />
                       </Box>
                     )}
                   </TableCell>

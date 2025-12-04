@@ -9,34 +9,22 @@ use Illuminate\Support\Facades\Auth;
 
 class AnneauxBullersController extends Controller
 {
-    //Récupérer tous les anneaux incomplets (gauche/droit null)//
-    public function getAnneaux()
+    //Récupérer tous les anneaux 
+    public function getAnneaux(Request $request)
     {
-        // $now = now();
-        // $currentHour = $now->hour;
-
-        // // Déterminer la fin du shift
-        // if ($currentHour >= 6 && $currentHour < 14) {
-        //     $end = $now->copy()->setTime(14, 0, 0);
-        // } elseif ($currentHour >= 14 && $currentHour < 22) {
-        //     $end = $now->copy()->setTime(22, 0, 0);
-        // } else {
-        //     $end = $currentHour >= 22
-        //         ? $now->copy()->addDay()->setTime(6, 0, 0)
-        //         : $now->copy()->setTime(6, 0, 0);
-        // }
-        // $endOfDay = $now->copy()->endOfDay(); // fin de la journée (23:59:59)
-        // Récupérer les anneaux dont le chargement sort avant la fin du shift
-        $anneaux = AnneauxBullers::with(['chargement' => function ($query) {
-            $query->with(['wagon', 'type_wagon', 'four', 'details.famille', 'user']);
-        }])
+        $anneaux = AnneauxBullers::with([
+            'chargement.wagon',
+            'chargement.type_wagon',
+            'chargement.four',
+            'chargement.details.famille',
+            'chargement.user',
+            'user_cre',
+            'user_rep'
+        ])
             ->where(function ($q) {
                 $q->whereNull('gauche')
                     ->orWhereNull('droit');
             })
-            // ->whereHas('chargement', function ($query) use ($endOfDay) {
-            //     $query->where('datetime_sortieEstime', '<=', $endOfDay);
-            // })
             ->join('chargements', 'chargements.id', '=', 'anneaux_bullers.id_chargement')
             ->orderBy('chargements.datetime_sortieEstime', 'ASC')
             ->get();
@@ -48,11 +36,117 @@ class AnneauxBullersController extends Controller
         return response()->json([
             'anneaux' => $anneaux,
             'anneauxParFour' => $anneauxParFour,
-            // 'shift_end' => $end->format('H:i'),
-            // 'end_of_day' => $endOfDay->format('d-m-Y H:i:s'),
             'total_count' => $anneaux->count(),
         ]);
     }
+    /*public function getHistoriqueFour3(Request $request)
+    {
+        return $this->getHistoriqueAnneauxParFour($request, 3);
+    }
+
+    public function getHistoriqueFour4(Request $request)
+    {
+        return $this->getHistoriqueAnneauxParFour($request, 4);
+    }*/
+
+    public function getHistoriqueAnneauxParFour(Request $request, int $numFour)
+    {
+        try {
+            $perPage = $request->input('per_page', 50);
+            $page = $request->input('page', 1);
+
+            $query = AnneauxBullers::with([
+                'chargement.wagon',
+                'chargement.type_wagon',
+                'chargement.four',
+                'chargement.details.famille',
+                'chargement.user',
+                'user_cre',
+                'user_rep'
+            ])
+                ->join('chargements', 'chargements.id', '=', 'anneaux_bullers.id_chargement')
+                ->where(function ($q) {
+                    $q->whereNotNull('gauche')->orWhereNotNull('droit');
+                })
+                ->whereHas('chargement.four', fn($q) => $q->where('num_four', $numFour));
+
+            // Filtrage 
+            if ($request->dateFrom) {
+                $query->whereDate('chargements.date_entrer', '>=', $request->dateFrom);
+            }
+
+            if ($request->dateTo) {
+                $query->whereDate('chargements.date_entrer', '<=', $request->dateTo);
+            }
+
+            if ($request->wagon) {
+                $query->whereHas(
+                    'chargement.wagon',
+                    fn($q) =>
+                    $q->where('num_wagon', 'like', "%{$request->wagon}%")
+                );
+            }
+            if ($request->type_wagon) {
+                $query->whereHas(
+                    'chargement.type_wagon',
+                    fn($q) =>
+                    $q->where('type_wagon', 'like', "%{$request->type_wagon}%")
+                );
+            }
+
+            if ($request->four) {
+                $query->whereHas(
+                    'chargement.four',
+                    fn($q) =>
+                    $q->where('num_four', $request->four)
+                );
+            }
+
+            if ($request->user_cre) {
+                $query->whereHas('user_cre', fn($u) => $u->where('matricule', 'like', "%{$request->user_cre}%"));
+            }
+
+            if ($request->user_rep) {
+                $query->whereHas('user_rep', fn($u) => $u->where('matricule', 'like', "%{$request->user_rep}%"));
+            }
+            if ($request->date_sortie) {
+                $query->whereDate('chargements.datetime_sortieEstime', '=', $request->date_sortie);
+            }
+            if ($request->date_entrer) {
+                $query->whereDate('chargements.date_entrer', '=', $request->date_entrer);
+            }
+
+            if ($request->gauche) {
+                $query->where('gauche', 'like', "%{$request->gauche}%");
+            }
+
+            if ($request->droit) {
+                $query->where('droit', 'like', "%{$request->droit}%");
+            }
+
+
+            $query->orderBy('chargements.datetime_sortieEstime', 'desc')
+                ->select('anneaux_bullers.*');
+
+            $anneaux = $query->paginate($perPage, ['*'], 'page', $page);
+
+            return response()->json([
+                'success' => true,
+                'data' => $anneaux,
+                'total' => $anneaux->total(),
+                'current_page' => $anneaux->currentPage(),
+                'per_page' => $anneaux->perPage(),
+                'last_page' => $anneaux->lastPage()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération de l\'historique des anneaux',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     //Sauvegarder les mesures gauche/droit pour un chargement donné
     public function saveMeasures(Request $request, $id_chargement)
     {
@@ -69,9 +163,13 @@ class AnneauxBullersController extends Controller
         ]);
 
         // Assigner l'utilisateur connecté
-        $data['id_user'] = $user->id_user;
+        $data['id_user_rep'] = $user->id_user ?? null;
 
-        $anneau->update($data);
+        $anneau->update([
+            'gauche' => $request->gauche,
+            'droit'  => $request->droit,
+            'id_user_rep' => $user->id_user,
+        ]);
 
         return response()->json([
             'message' => 'Mesures enregistrées avec succès',

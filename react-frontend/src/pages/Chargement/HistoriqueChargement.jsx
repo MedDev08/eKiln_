@@ -64,7 +64,6 @@ const HistoriqueChargement = () => {
   const [fours, setFours] = useState([]);
   const [wagons, setWagons] = useState([]);
   const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
-  const [chargementToDelete, setChargementToDelete] = useState(null);
   const [loadingSubmit, setLoadingSubmit] = useState(false); // pour l'édition
   // null = tri par défaut, 'desc' = décroissant, 'asc' = croissant
   const [piecesSortOrder, setPiecesSortOrder] = useState(null);

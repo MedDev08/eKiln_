@@ -341,7 +341,7 @@ class ChargementController extends Controller
             }
 
             // Get fresh data
-            $f3 = Chargement::with(['wagon', 'four', 'type_wagon'])
+            $f3 = Chargement::with(['wagon', 'four', 'type_wagon', 'anneaux'])
                 ->where('id_four', 6)
                 ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir'])
                 ->orderBy('datetime_sortieEstime', 'asc')
@@ -355,11 +355,12 @@ class ChargementController extends Controller
                         'Statut' => $chargement->statut,
                         'debut_cuisson' => $chargement->datetime_chargement,
                         'FinCuissonEstimee' => $chargement->datetime_sortieEstime,
-                        'username' => $chargement->user->name ?? 'Unknown'
+                        'username' => $chargement->user->name ?? 'Unknown',
+                        'anneaux' => $chargement->anneaux
                     ];
                 });
 
-            $f4 = Chargement::with(['wagon', 'four', 'type_wagon'])
+            $f4 = Chargement::with(['wagon', 'four', 'type_wagon', 'anneaux'])
                 ->where('id_four', 7)
                 ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir'])
                 ->orderBy('datetime_sortieEstime', 'asc')
@@ -373,7 +374,8 @@ class ChargementController extends Controller
                         'Statut' => $chargement->statut,
                         'debut_cuisson' => $chargement->datetime_chargement,
                         'FinCuissonEstimee' => $chargement->datetime_sortieEstime,
-                        'username' => $chargement->user->name ?? 'Unknown'
+                        'username' => $chargement->user->name ?? 'Unknown',
+                        'anneaux' => $chargement->anneaux
                     ];
                 });
 
@@ -1295,7 +1297,7 @@ class ChargementController extends Controller
     {
         try {
             // On récupère tout ce qui est "en attente" 
-            $chargementsEnAttente = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'anneaux'])
+            $chargementsEnAttente = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'anneaux', 'type_wagon'])
                 ->where('statut', 'en attente')
                 ->orderBy('datetime_chargement', 'asc')
                 ->get();
@@ -1304,7 +1306,7 @@ class ChargementController extends Controller
             $chargementsEnCuisson = collect();
             //  Pour chaque four, on récupère les 10 derniers chargements en cuisson
             foreach ($foursIds as $idFour) {
-                $last10 = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'anneaux'])
+                $last10 = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'anneaux', 'type_wagon'])
                     ->where('statut', 'en cuisson')
                     ->where('id_four', $idFour)
                     ->orderBy('date_entrer', 'desc')
@@ -1386,7 +1388,7 @@ class ChargementController extends Controller
             $perPage = $request->input('per_page', 10);
 
             //  Requête filtrée
-            $query = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'type_wagon'])
+            $query = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'type_wagon', 'anneaux'])
                 ->when($dateFrom, fn($q) => $q->whereDate('datetime_chargement', '>=', $dateFrom))
                 ->when($dateTo, fn($q) => $q->whereDate('datetime_chargement', '<=', $dateTo))
                 ->when($matricule, fn($q) => $q->whereHas('user', fn($q2) => $q2->where('matricule', 'like', "%{$matricule}%")))
@@ -1588,10 +1590,15 @@ class ChargementController extends Controller
     public function setAnneaux(Request $request, $id_chargement)
     {
         if ($request->coche) {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['message' => 'Non authentifié'], 401);
+            }
             // Coche = créer si n'existe pas
             $anneau = AnneauxBullers::firstOrCreate(
                 [
-                    'id_chargement' => $id_chargement
+                    'id_chargement' => $id_chargement,
+                    'id_user_cre' => $user->id_user
                 ]
             );
             return response()->json($anneau);

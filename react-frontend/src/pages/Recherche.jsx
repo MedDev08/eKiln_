@@ -30,7 +30,7 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import FlagIcon from "@mui/icons-material/Flag";
-import { CircleOutlined } from '@mui/icons-material'; 
+import { Circle } from '@mui/icons-material'; 
 import ChargementDetailsModal from "./Chargement/ChargementDetailsModal"; 
 import ModificationChargement from "./ModificationChargement";
 import { format, parseISO } from 'date-fns';
@@ -153,7 +153,7 @@ export default function Recherche() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chargementToDelete, setChargementToDelete] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState("");
-  const [anneaux, setAnneaux] = useState([]);
+  // const [anneaux, setAnneaux] = useState([]);
 
   const [searchParams, setSearchParams] = useState({
     matricule: "",
@@ -240,24 +240,9 @@ useEffect(() => {
     });
 
     setChargements(wagonsWithDetails);
-    setDensity(res.data.densite_par_four)
-    // const allDensityFamilles = [];
-    //   res.data.densite_par_four.forEach(four => {
-    //     four.details.forEach(ch => {
-    //       ch.familles.forEach(fam => {
-    //         allDensityFamilles.push({
-    //           id_four: four.id_four,
-    //           id_chargement: ch.id_chargement,
-    //           id_famille: fam.id_famille,
-    //           density_famille: fam.density_famille
-    //         });
-    //       });
-    //     });
-    //   });
-    //  console.log("allDensityFamilles", allDensityFamilles);
-    //  setDensityFamilles(allDensityFamilles);
-     setTotal(res.data.data.total || 0);        // ou last_page*rowsPerPage si total n'existe pas
-     setTotaux(res.data.totaux || { chargements: 0,
+    setDensity(res.data.densite_par_four);
+    setTotal(res.data.data.total || 0);        // ou last_page*rowsPerPage si total n'existe pas
+    setTotaux(res.data.totaux || { chargements: 0,
        pieces: 0 ,
        wagons_avec_balaste:0 ,
        densite: 0 ,
@@ -266,7 +251,7 @@ useEffect(() => {
       balastes:0 ,
       densite_finale:0
     });
-      setTotaux(res.data.totaux || { chargements: 0,
+    setTotaux(res.data.totaux || { chargements: 0,
         pieces: 0 ,
         wagons_avec_balaste:0 ,
         densite: 0 ,
@@ -277,8 +262,8 @@ useEffect(() => {
         });
     } catch (err) {
       console.error("Erreur API:", err.response?.data || err.message);
-      setChargements([]);
-      setTotaux({ chargements: 0,
+    setChargements([]);
+    setTotaux({ chargements: 0,
         pieces: 0 ,
         wagons_avec_balaste:0 ,
         densite: 0 ,
@@ -291,21 +276,21 @@ useEffect(() => {
       setLoading(false);
     }
   };
-  const fetchAnneaux = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:8000/api/all-chargement-ids", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setAnneaux(res.data.ids); // stocke tous les IDs de chargement
-      console.log("id_chargemet",res.data.ids);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  // const fetchAnneaux = async () => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     const res = await axios.get("http://localhost:8000/api/all-chargement-ids", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     setAnneaux(res.data.ids); // stocke tous les IDs de chargement
+  //     console.log("id_chargemet",res.data.ids);
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
   useEffect(() => {
     fetchHistorique();
-    fetchAnneaux();
+    // fetchAnneaux();
     // const interval = setInterval(fetchHistorique, 60000);
     // return () => clearInterval(interval);
   }, [searchParams, page, rowsPerPage]);
@@ -340,7 +325,7 @@ useEffect(() => {
 
   const handleFilter = () => {
     fetchHistorique();
-    fetchAnneaux();
+    // fetchAnneaux();
   };
 
   return (
@@ -512,9 +497,9 @@ useEffect(() => {
                       <TableRow key={row.id}>
                        <TableCell>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                          {anneaux.includes(row.id) && (
+                           {row.anneaux && ( 
                             <Box sx={{ ...boxStyle, color: "gold" }}>
-                              <CircleOutlined fontSize="small" />
+                              <Circle fontSize="small" />
                             </Box>
                           )}
                           {row.containsBalsate && (
@@ -527,7 +512,14 @@ useEffect(() => {
                         <TableCell>{formatDate(row.datetime_chargement)}</TableCell>
                          <TableCell>{row.shift|| "-"}</TableCell>
                         <TableCell>{row.wagon?.num_wagon || "-"}</TableCell>
-                        <TableCell>{row.type_wagon?.type_wagon || "-"}</TableCell>
+                        <TableCell><Chip label={row.type_wagon?.type_wagon || 'N/A'} 
+                           sx={{backgroundColor: row.type_wagon?.color || '#ccc',
+                              color: '#fff', 
+                              fontWeight: 'bold'
+                            }}
+                            size="small"
+                          />
+                        </TableCell>
                         <TableCell>{row.four?.num_four || "-"}</TableCell>
                         <TableCell>{row.details?.reduce((sum, d) => sum + d.quantite, 0) || 0}</TableCell>
                         <TableCell><Chip 

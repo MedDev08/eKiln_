@@ -169,7 +169,10 @@ Route::get('/chargements/archives', [ChargementController::class, 'archives']);
 Route::post('/chargements/{id}/restore', [ChargementController::class, 'restore']);
 Route::get('/audits', [AuditController::class, 'index']);
 Route::get('/audit-types', [AuditController::class, 'types']);
-Route::post('/chargements/{id}/anneaux', [ChargementController::class, 'setAnneaux']);
+Route::middleware('auth:sanctum')->post('/chargements/{id}/anneaux', [ChargementController::class, 'setAnneaux']);
 Route::get('anneaux', [AnneauxBullersController::class, 'getAnneaux']);
 Route::middleware('auth:sanctum')->post('/anneaux/{id}/mesures', [AnneauxBullersController::class, 'saveMeasures']);
 Route::get('/all-chargement-ids', [AnneauxBullersController::class, 'getAllChargementIds']);
+Route::get('/historique-anneaux/{numFour}', [AnneauxBullersController::class, 'getHistoriqueAnneauxParFour']);
+/*Route::get('/historique-anneaux/four3', [AnneauxBullersController::class, 'getHistoriqueFour3']);
+Route::get('/historique-anneaux/four4', [AnneauxBullersController::class, 'getHistoriqueFour4']);*/

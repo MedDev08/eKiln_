@@ -174,5 +174,5 @@ Route::get('anneaux', [AnneauxBullersController::class, 'getAnneaux']);
 Route::middleware('auth:sanctum')->post('/anneaux/{id}/mesures', [AnneauxBullersController::class, 'saveMeasures']);
 Route::get('/all-chargement-ids', [AnneauxBullersController::class, 'getAllChargementIds']);
 Route::get('/historique-anneaux/{numFour}', [AnneauxBullersController::class, 'getHistoriqueAnneauxParFour']);
-/*Route::get('/historique-anneaux/four3', [AnneauxBullersController::class, 'getHistoriqueFour3']);
-Route::get('/historique-anneaux/four4', [AnneauxBullersController::class, 'getHistoriqueFour4']);*/
+Route::post('/chargements/{id}/typeWagon', [ChargementController::class, 'updateTypeWagon']);
+Route::get('/chargements/{numFour}', [ChargementController::class, 'getChargements']);

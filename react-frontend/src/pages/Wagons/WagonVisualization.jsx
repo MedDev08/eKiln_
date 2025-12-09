@@ -91,6 +91,7 @@ const WagonVisualization = () => {
     const [openModal, setOpenModal] = useState(false);
     const [now, setNow] = useState(new Date());
     const [anneaux, setAnneaux] = useState([]);
+    const [anneauxCoche, setAnneauxCoche] = useState(false);
 
    
     const fetchAnneaux = async () => {
@@ -179,6 +180,37 @@ const WagonVisualization = () => {
             });
         }
     };
+   const updateAnneaux = async () => {
+    if (!selectedChargement) return; 
+
+    try {
+        const token = localStorage.getItem("token");
+        await fetch(
+            `http://localhost:8000/api/chargements/${selectedChargement}/anneaux`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ coche: anneauxCoche }),
+            }
+        );
+
+        // Mettre à jour le state local pour refléter le changement
+        if (anneauxCoche) {
+            setAnneaux(prev => [...prev, selectedChargement]);
+        } else {
+            setAnneaux(prev => prev.filter(id => id !== selectedChargement));
+        }
+
+    } catch (error) {
+        console.error("Erreur lors de la mise à jour des anneaux :", error);
+        // Revenir à l’état précédent si erreur
+        setAnneauxCoche(prev => !prev);
+    }
+};
+
 
     const handleBoxClick = async (chargement) => {
         try {
@@ -215,6 +247,8 @@ const WagonVisualization = () => {
         fetchChargements();
         fetchAnneaux();
     };
+    const user = JSON.parse(localStorage.getItem('user'));
+    const role = user?.role?.toLowerCase();
     
     // Calculer la progression de la cuisson pour un wagon
     const calculateProgress = (chargement) => {
@@ -383,7 +417,20 @@ const WagonVisualization = () => {
                                             ))}
                                         </tbody>
                                     </table>
-
+                                      {["admin","cuiseur"].includes(role) &&(
+                                        <>
+                                    <Box display="flex" alignItems="center" mb={2}>
+                                        <input
+                                        type="checkbox"
+                                        checked={anneauxCoche}
+                                        onChange={(e) => {
+                                            setAnneauxCoche(e.target.checked);
+                                            updateAnneaux();
+                                        }}
+                                        />
+                                        <Typography ml={1}><strong>Anneaux Bullers</strong></Typography>
+                                    </Box>
+                                    </>)}
                                     {footerData && (
                                         <div className="footer-info">
                                             <p><strong>Historique de traitement</strong></p>
@@ -394,13 +441,29 @@ const WagonVisualization = () => {
                                     )}
                                 </>
                             )}
-                            <Button 
-                                onClick={handleCloseModal} 
-                                variant="contained" 
-                                style={{ marginTop: '20px' }}
-                            >
-                                Fermer
-                            </Button>
+                            <Box display="flex" justifyContent="space-between" mt={3}>
+                                <Button 
+                                    onClick={handleCloseModal} 
+                                     sx={{ mr: 2 }}
+                                >
+                                    Fermer
+                                </Button>
+                                {["admin","cuiseur"].includes(role) &&(
+                                <>
+                                    <Button
+                                        variant="contained"
+                                        color="success"
+                                        onClick={async () => {
+                                        await updateAnneaux(); // Mise à jour des anneaux
+                                         handleRefresh();
+                                         handleCloseModal();      
+                                        }}
+                                        >
+                                        Valider
+                                    </Button>
+                                </>
+                                )}
+                            </Box>
                         </div>
                     </div>
                 </Fade>

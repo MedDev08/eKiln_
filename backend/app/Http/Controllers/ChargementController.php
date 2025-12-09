@@ -403,7 +403,7 @@ class ChargementController extends Controller
     // Dans votre contrôleur API qui gère chargement-details
     public function getChargementDetails($id_chargement)
     {
-        $chargement = Chargement::with(['user', 'details.famille'])->find($id_chargement);
+        $chargement = Chargement::with(['user', 'details.famille', 'anneaux'])->find($id_chargement);
 
         if (!$chargement) {
             return response()->json(['error' => 'Chargement not found'], 404);
@@ -1607,6 +1607,51 @@ class ChargementController extends Controller
             AnneauxBullers::where('id_chargement', $id_chargement)->delete();
 
             return response()->json(['deleted' => true]);
+        }
+    }
+    public function updateTypeWagon(Request $request, $id)
+    {
+        $chargement = Chargement::findOrFail($id);
+
+        $chargement->id_typeWagon = $request->id_typeWagon;
+        $chargement->save();
+
+        return response()->json(['success' => true]);
+    }
+    public function getChargements(Request $request, int $numFour)
+    {
+        try {
+            $perPage = $request->input('per_page', 90);
+
+            $query = Chargement::with(['details.famille', 'wagon', 'four'])
+                ->orderBy('datetime_chargement', 'desc')
+                ->whereHas('four', fn($q) => $q->where('num_four', $numFour));
+
+            if ($request->dateFrom) {
+                $query->where('date_entrer', '>=', $request->dateFrom . ' 09:00:00');
+            }
+
+            if ($request->dateTo) {
+                //$end = Carbon::parse($request->dateTo)->addDay()->format('Y-m-d');
+                $query->where('date_entrer', '<=', $request->dateTo . ' 16:59:59');
+            }
+
+            $chargements = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'chargements' => $chargements->items(),
+                'total' => $chargements->total(),
+                'per_page' => $chargements->perPage(),
+                'current_page' => $chargements->currentPage(),
+                'last_page' => $chargements->lastPage(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des données',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

@@ -15,10 +15,12 @@ import {
   TextField,
   Button,
   IconButton,
+  Autocomplete,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { CircularProgress } from "@mui/material";
 
 export default function ChargementDetailsModal({
   onClose,
@@ -27,6 +29,54 @@ export default function ChargementDetailsModal({
   getStatusColor,
   // densityFamilles 
 }) {
+const [selectedTypeWagon, setSelectedTypeWagon] = useState("");
+const [typeWagons, setTypeWagons] = useState([]);
+const [typeWagonOpen, setTypeWagonOpen] = useState(false);
+const [loadingData, setLoadingData] = useState(true);
+const [isSubmitting, setIsSubmitting] = useState(false);
+  const fetchTypeWagons = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:8000/api/type_wagons", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+
+      setTypeWagons(data);
+
+      // Préremplir
+      if (chargement?.id_typeWagon) {
+        setSelectedTypeWagon(chargement.id_typeWagon);
+      }
+
+    } catch (err) {
+      console.error("Erreur chargement types wagons:", err);
+    }finally {
+      setLoadingData(false); // tout est chargé
+    }
+  };
+
+useEffect(() =>{
+fetchTypeWagons();
+},[]);
+
+const updateTypeWagon = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    await fetch(`http://127.0.0.1:8000/api/chargements/${chargement.id}/typeWagon`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id_typeWagon: selectedTypeWagon }),
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du type wagon :", error);
+  }
+};
+
  // --- Ici on définit la fonction pour calculer la date initiale ---
 const getInitialDate = async () => {
   if (!chargement) return new Date();
@@ -69,7 +119,9 @@ const getInitialDate = async () => {
     // En cas d'erreur, on retourne une date actuelle + décalage
     let fallbackDate = new Date();
     return fallbackDate;
-  }
+  }finally {
+      setLoadingData(false); // tout est chargé
+    }
 };
 
 // --- Initialiser le state ---
@@ -106,7 +158,7 @@ const updateAnneaux = async () => {
   try {
     const token = localStorage.getItem("token");
     const response = await fetch(
-      `http://127.0.0.1:8000/api/chargements/${chargement.id}/anneaux`,
+      `http://localhost:8000/api/chargements/${chargement.id}/anneaux`,
       {
         method: "POST",
         headers: {
@@ -165,7 +217,7 @@ const updateAnneaux = async () => {
           <Typography variant="subtitle2">Wagon :</Typography>
           <Typography>{chargement.wagon?.num_wagon || "N/A"}</Typography>
         </Grid>
-        <Grid item xs={6}>
+         <Grid item xs={6}>
         <Typography variant="subtitle2">Type Wagon :</Typography>
           <Chip label={chargement.type_wagon?.type_wagon || 'N/A'} 
           sx={{backgroundColor: chargement.type_wagon?.color || '#ccc',
@@ -260,8 +312,77 @@ const updateAnneaux = async () => {
         <Typography ml={1}><strong>Anneaux Bullers</strong></Typography>
       </Box>
       <Typography sx={{ mb: 1 }}>Heure d’entrée :</Typography>
-      <Grid container spacing={2}>
-      <Grid item xs={6}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={4}>
+          <Autocomplete
+              options={typeWagons}
+              getOptionLabel={(tw) => tw.type_wagon}
+              value={typeWagons.find(tw => tw.id === selectedTypeWagon) || null}
+              onChange={(event, newValue) => {
+                setSelectedTypeWagon(newValue ? newValue.id : null);
+              }}
+              //  OPTION BACKGROUND
+              renderOption={(props, option) => {
+                const color = option.color;
+                const isColored = color !== "inherit";
+
+              return (
+                <li
+                  {...props}
+                  style={{
+                    backgroundColor: isColored ? color : "white",
+                    color: isColored ? "white" : "black",
+                    borderRadius: "4px",
+                    margin: "3px 0"
+                  }}
+                >
+                  {option.type_wagon}
+                </li>
+              );
+          }}
+              renderInput={(params) => {
+                const selected = typeWagons.find(tw => tw.id === selectedTypeWagon);
+                return (
+                  <TextField
+                    {...params}
+                    label="Type Wagon"
+                    required
+                    margin="dense"
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: selected ? (() => {
+                        const bg = selected.color;
+                        const isColored = bg !== "inherit";
+
+                        return (
+                          <Chip
+                            label={selected.type_wagon}
+                            size="small"
+                            sx={{
+                              backgroundColor: isColored ? bg : "white",
+                              color: isColored ? "white" : "black",
+                              fontWeight: "bold",
+                              border: isColored ? "none" : "1px solid #ccc"
+                            }}
+                          />
+                        );
+                      })() : null,
+                      inputProps: {
+                        ...params.inputProps,
+                        value: "" // garde ton comportement
+                      }
+                    }}
+                  />
+                );
+                  }}
+              open={typeWagonOpen}
+              onOpen={() => setTypeWagonOpen(true)}
+              onClose={() => setTypeWagonOpen(false)}
+              sx={{ width: "130px" }}
+                />
+        </Grid>
+      <Grid item xs={4}>
      {showField && (
         <>
           <TextField
@@ -273,18 +394,21 @@ const updateAnneaux = async () => {
               );
               setValidationDate(newDate);
             }}
+            margin="dense"
             fullWidth
             sx={{ mb: 2 }}
           />
         </>
       )}
       </Grid>
-       <Grid item xs={6}>
+      <Grid item xs={4}>
       <TextField
         type="time"
         value={validationDate ? format(validationDate, "HH:mm") : ""}
         onChange={handleChangeTime}
+        margin="dense"
         fullWidth
+        sx={{ mb: 2 }}
       />
        </Grid>
        </Grid>
@@ -293,19 +417,47 @@ const updateAnneaux = async () => {
         <Button onClick={onClose} sx={{ mr: 2 }}>
           Annuler
         </Button>
+        {/* <Button
+          variant="contained"
+          color="success"
+          disabled={loadingData || isSubmitting}
+          onClick={async () => {
+          await updateAnneaux(); // Mise à jour des anneaux
+          await updateTypeWagon(); 
+          onValidate(validationDate); // Puis validation du chargement
+          }}
+        >
+          Valider
+        </Button> */}
         <Button
           variant="contained"
           color="success"
-         onClick={async () => {
-        await updateAnneaux(); // Mise à jour des anneaux
-        onValidate(validationDate); // Puis validation du chargement
-        }}
+          disabled={loadingData || isSubmitting} // désactivé si data pas chargée ou submission en cours
+          onClick={async () => {
+            try {
+              setIsSubmitting(true);
+
+              await updateAnneaux();
+              await updateTypeWagon();
+              await onValidate(validationDate);
+              onClose();
+              return; 
+            } catch (error) {
+              console.error("Erreur validation :", error);
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
         >
-          Valider
+          {isSubmitting ? (
+            <CircularProgress size={24} color="inherit" /> // spinner dans le bouton
+          ) : (
+            "Valider"
+          )}
         </Button>
       </Box>
        </>
-)}
+    )}
     </Box>
   );
 }

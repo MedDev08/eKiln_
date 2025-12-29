@@ -237,10 +237,10 @@ function Enfourneur() {
     //     : 0);
     // }, 0);
       const totalPieces = chargements.reduce((sum, chargement) => {
-        return sum + (chargement.details
-          ? chargement.details.reduce(
+        return sum + (chargement.details ? chargement.details.reduce(
               (detSum, detail) =>
-                ["balaste", "couvercles"].includes(detail.famille?.nom_famille?.toLowerCase())
+                // ["balaste", "couvercles"].includes(detail.famille?.nom_famille?.toLowerCase())
+                  (detail.famille.active === 0)
                   ? detSum 
                   : detSum + Number(detail.quantite),
               0
@@ -687,8 +687,7 @@ useEffect(() => {
                                     fullWidth
                                     sx={{
                                       backgroundColor:
-                                        famille1.nom_famille === "Balaste" ||
-                                        famille1.nom_famille === "Couvercles"
+                                        famille1.active === 0 
                                           ? "#f8d7da" // rouge clair
                                           : quantites[famille1.id_famille] > 0
                                           ? "#d1f7c4" // vert si rempli
@@ -738,8 +737,7 @@ useEffect(() => {
                                       fullWidth
                                       sx={{
                                         backgroundColor:
-                                          famille2.nom_famille === "Balaste" ||
-                                          famille2.nom_famille === "Couvercles"
+                                          famille2.active === 0
                                             ? "#f8d7da"
                                             : quantites[famille2.id_famille] > 0
                                             ? "#d1f7c4"

@@ -1,12 +1,4 @@
-// import React from 'react'
-// import Sidebar from '../components/layout/sidebar'
-// export default function Familles() {
-//   return (
-//     <Sidebar initialPath="/settings/familles" >
-//     <div>Familles</div>
-// </Sidebar>
-//   )
-// }
+
 import * as React from 'react';
 import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 import {
@@ -20,7 +12,10 @@ import {
   useTheme,
   Typography,
   Snackbar,
-  Alert
+  Alert,
+  Switch,
+  DialogContent,
+  CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
@@ -98,17 +93,41 @@ export default function Familles() {
   const [error, setError] = React.useState(null);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const [isSubmitting, setIsSubmitting] = React.useState(false); 
 
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarMessage, setSnackbarMessage] = React.useState('');
   const [snackbarSeverity, setSnackbarSeverity] = React.useState('success');
+  const [openActiveDialog, setOpenActiveDialog] = React.useState(false);
+  const [currentRow, setCurrentRow] = React.useState(null);
+  const [newActive, setNewActive] = React.useState(false);
 
+  
   const columns = [
     { field: 'id_famille', headerName: 'ID', width: 100 },
     { field: 'nom_famille', headerName: 'Nom Famille', width: 350 },
     { field: 'valeur_trieur', headerName: 'Valeur Trieur', width: 250 },
-    
+    { field: 'active',
+      headerName: 'Active',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params) => (
+        <Switch
+          checked={Boolean(params.value)}
+          color="success" 
+          size="small"
+          onChange={() => {
+        setCurrentRow(params.row);
+        setNewActive(!params.value);
+        setOpenActiveDialog(true);
+        }}
+         
+        />
+      ),
+     
+    }, 
     {
       field: 'actions',
       headerName: 'Actions',
@@ -148,22 +167,6 @@ export default function Familles() {
           }
         });
 
-        // Fetch total pieces for each famille
-        // const famillesWithTotals = await Promise.all(
-        //   response.data.map(async (famille) => {
-        //     const totalResponse = await axios.get(`http://localhost:8000/api/familles/${famille.id_famille}`, {
-        //       headers: { Authorization: `Bearer ${token}` }
-        //     });
-        //     return {
-        //       ...famille,
-        //       total_pieces: totalResponse.data.total_pieces || 0
-        //     };
-        //   })
-        // );
-
-        // const sortedFamilles = famillesWithTotals.sort((a, b) => b.id_famille - a.id_famille);
-        // setFamilles(sortedFamilles);
-        // setFilteredFamilles(sortedFamilles);
         const sortedFamilles = response.data.sort((a, b) => b.id_famille - a.id_famille);
         setFamilles(sortedFamilles);
         setFilteredFamilles(sortedFamilles);
@@ -307,7 +310,76 @@ export default function Familles() {
             getRowId={(row) => row.id_famille}
             components={{ Toolbar: GridToolbar }}
           />
-
+          <Dialog
+            open={openActiveDialog}
+            onClose={() => setOpenActiveDialog(false)}
+            maxWidth="xs" // tu peux mettre 'sm' ou 'md' si tu veux plus grand
+            fullWidth
+          >
+            <DialogTitle sx={{ fontWeight: 'bold', fontSize: 20, textAlign: 'center' }}>
+              Confirmer la modification
+            </DialogTitle>
+            <DialogContent sx={{ textAlign: 'center', fontSize: 16 }}>
+              Êtes-vous sûr de vouloir{' '}
+              <span style={{ fontWeight: 'bold', color: newActive ? 'green' : 'red' }}>
+                {newActive ? 'activer' : 'désactiver'}
+              </span>{' '}
+              cette famille ?
+            </DialogContent>
+            <DialogActions sx={{ justifyContent: 'center', paddingBottom: 3 }}>
+              <Button
+                onClick={() => setOpenActiveDialog(false)}
+                variant="outlined"
+                sx={{ marginRight: 2 }}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    setIsSubmitting(true);
+                    await axios.put(
+                      `http://localhost:8000/api/familles/${currentRow.id_famille}`,
+                      {
+                        nom_famille: currentRow.nom_famille,
+                        valeur_trieur: currentRow.valeur_trieur,
+                        active: newActive ? 1 : 0,
+                      },
+                      { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    // mettre à jour le tableau
+                    currentRow.active = newActive;
+                    setFamilles(prev => [...prev]);
+                    setFilteredFamilles(prev => [...prev]);
+                    setSnackbarMessage(`Famille ${newActive ? 'activée' : 'désactivée'} avec succès !`);
+                    setSnackbarSeverity('success');
+                    setSnackbarOpen(true);
+                  } catch (err) {
+                    console.error(err);
+                    setSnackbarMessage("Impossible de modifier l'état actif");
+                    setSnackbarSeverity('error');
+                    setSnackbarOpen(true);
+                  } finally {
+                    setOpenActiveDialog(false);
+                    setIsSubmitting(false);
+                  }
+                }}
+                variant="contained"
+                sx={{
+                  backgroundColor: newActive ? 'green' : 'red',
+                  '&:hover': { backgroundColor: newActive ? '#006400' : '#8B0000' },
+                  color: 'white',
+                  fontWeight: 'bold'
+                }}
+              >
+                {isSubmitting ? (
+                <CircularProgress size={24} color="inherit" /> // spinner dans le bouton
+                ) : (
+                  "Confirmer"
+                )}
+              </Button>
+            </DialogActions>
+          </Dialog>
           <Dialog open={openDialog} onClose={handleCancelDelete}>
             <DialogTitle>Are you sure you want to delete this famille?</DialogTitle>
             <DialogActions>

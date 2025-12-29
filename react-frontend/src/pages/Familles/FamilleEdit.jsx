@@ -1,17 +1,10 @@
-// import React from 'react';
-// import Sidebar from '../components/layout/sidebar';
-// export default function FamilleEdit() {
-//   return (
-//     <Sidebar initialPath="/settings/familles/edit" >
-//     <div>FamilleEdit</div>
-//     </Sidebar>
-//   )
-// }
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { Switch, FormControlLabel } from '@mui/material';
 import {
   Box,
   TextField,
@@ -22,10 +15,12 @@ import {
 } from '@mui/material';
 
 export default function FamilleEdit() {
+   const navigate = useNavigate();
   const { id } = useParams();
   const [formData, setFormData] = useState({
     nom_famille: '',
-    valeur_trieur: ''
+    valeur_trieur: '',
+    active: true,
   });
   const [loading, setLoading] = useState({ form: true, submit: false });
   const [error, setError] = useState('');
@@ -38,10 +33,11 @@ export default function FamilleEdit() {
         const response = await axios.get(`http://localhost:8000/api/familles/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
+        console.log("response",response.data);
         setFormData({
           nom_famille: response.data.nom_famille,
-          valeur_trieur: response.data.valeur_trieur
+          valeur_trieur: response.data.valeur_trieur,
+          active: response.data.active,
         });
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load famille');
@@ -68,6 +64,9 @@ export default function FamilleEdit() {
       });
 
       setSuccess(true);
+      setTimeout(() => {
+        navigate('/settings/familles');
+      }, 500);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update famille');
@@ -85,11 +84,11 @@ export default function FamilleEdit() {
 
   if (loading.form) {
     return (
-      <Sidebar initialPath="/settings/familles/edit">
+      <SidebarChef initialPath="/settings/familles/edit">
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <CircularProgress />
         </Box>
-      </Sidebar>
+      </SidebarChef>
     );
   }
 
@@ -139,7 +138,20 @@ export default function FamilleEdit() {
           onChange={handleChange}
           required
         />
-
+         <Box>
+          <FormControlLabel
+          control={
+          <Switch
+          checked={!!formData.active} 
+          onChange={(e) =>
+          setFormData({ ...formData, active: e.target.checked })
+          }
+          color="success"
+          />
+          }
+          label={formData.active ? "Active" : "Inactive"}
+        />
+        </Box>
         {error && (
           <Alert severity="error" sx={{ mt: 2 }}>
             Error: {error}

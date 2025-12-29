@@ -44,6 +44,7 @@ const AnneauxPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [filters, setFilters] = useState({
     dateTo:'',
     dateFrom:'',
@@ -198,6 +199,7 @@ const AnneauxPage = () => {
 
   const handleSaveMeasures = async () => {
     try {
+      setIsSubmitting(true);
       const token = localStorage.getItem("token");
       const response = await axios.post(
         `http://localhost:8000/api/anneaux/${selectedAnneau.chargement.id}/mesures`,
@@ -220,8 +222,10 @@ const AnneauxPage = () => {
       setSuccessMessage(response.data.message);
       setTimeout(() => setSuccessMessage(""), 4000);
       console.log("Anneaux",response);
-    } catch (error) {
+    } catch (error) { 
       console.error(error.response?.data?.message || error.message);
+    } finally{
+      setIsSubmitting(false);
     }
   };
 const anneauxNonTraitesAFour = selectedFour ? anneauxNonTraites[selectedFour] || [] : [];
@@ -606,7 +610,7 @@ const anneauxNonTraitesAFour = selectedFour ? anneauxNonTraites[selectedFour] ||
                   </Grid>
                   <Grid item xs={6}>
                     <Typography variant="subtitle2">Total pièces :</Typography>
-                    <Typography>{selectedAnneau.chargement.details.reduce((sum, d) => sum + d.quantite, 0)}</Typography>
+                    <Typography>{selectedAnneau.chargement.details.reduce((sum, d) => d.famille?.active === 1 ? sum + Number(d.quantite) : sum, 0)}</Typography>
                   </Grid>
                   <Grid item xs={6}>
                     <Typography variant="subtitle2">Date chargement :</Typography>
@@ -691,8 +695,13 @@ const anneauxNonTraitesAFour = selectedFour ? anneauxNonTraites[selectedFour] ||
                   onClick= {handleSaveMeasures}
                   color="success"
                   variant="contained"
+                  disabled={!selectedAnneau?.gauche || !selectedAnneau?.droit }
                 >
-                  Valider
+                  {isSubmitting ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Valider"
+                )}      
                 </Button>
               </Box>
               </>

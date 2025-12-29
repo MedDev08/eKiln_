@@ -4,15 +4,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\BaseAuditableModel;
 
-class Famille extends Model
+class Famille extends BaseAuditableModel
 {
     protected $primaryKey = 'id_famille';
-    protected $fillable = ['nom_famille', 'valeur_trieur'];
+    protected $fillable = ['nom_famille', 'valeur_trieur', 'active'];
     public function polyvalences()
-{
-    return $this->hasMany(Polyvalence::class, 'id_famille', 'id_famille');
-}
+    {
+        return $this->hasMany(Polyvalence::class, 'id_famille', 'id_famille');
+    }
     public function affectationsTrieur()
     {
         return $this->hasMany(AffectationTrieur::class, 'id_famille', 'id_famille');

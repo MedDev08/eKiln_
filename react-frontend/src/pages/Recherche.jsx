@@ -129,7 +129,7 @@ export default function Recherche() {
     pieces: 0 ,
     wagons_avec_balaste:0 ,
     densite: 0 ,
-    pieces_sans_balaste_couvercle: 0,
+    total_Pieces_actives: 0,
     couvercles:0 ,
     balastes:0,
     densite_finale:0 
@@ -246,7 +246,7 @@ useEffect(() => {
        pieces: 0 ,
        wagons_avec_balaste:0 ,
        densite: 0 ,
-       pieces_sans_balaste_couvercle: 0 ,
+       total_Pieces_actives: 0 ,
       couvercles:0,
       balastes:0 ,
       densite_finale:0
@@ -255,7 +255,7 @@ useEffect(() => {
         pieces: 0 ,
         wagons_avec_balaste:0 ,
         densite: 0 ,
-        pieces_sans_balaste_couvercle: 0,
+        total_Pieces_actives: 0,
         couvercles:0 ,
         balastes:0 ,
         densite_finale:0
@@ -267,7 +267,7 @@ useEffect(() => {
         pieces: 0 ,
         wagons_avec_balaste:0 ,
         densite: 0 ,
-        pieces_sans_balaste_couvercle: 0 ,
+        total_Pieces_actives: 0 ,
         couvercles:0,
         balastes:0,
         densite_finale:0
@@ -345,7 +345,7 @@ useEffect(() => {
                subtitle: `${totaux.balastes}`,
              },
             { title: "couvercles ", value: totaux.couvercles, icon: <ViewModuleIcon fontSize="small" /> }, 
-            { title: "Pièces sans B/C", value: totaux.pieces_sans_balaste_couvercle, icon: <ViewModuleIcon fontSize="small" /> },
+            { title: "Pièces actives", value: totaux.total_Pieces_actives, icon: <ViewModuleIcon fontSize="small" /> },
             { title: " chargements ", value: totaux.chargements, icon: <LocalShippingIcon fontSize="small" /> },
             { title: "Densité ", value: totaux.densite, icon: <BarChartIcon fontSize="small" /> },
               // Spread the dynamically generated items
@@ -521,7 +521,7 @@ useEffect(() => {
                           />
                         </TableCell>
                         <TableCell>{row.four?.num_four || "-"}</TableCell>
-                        <TableCell>{row.details?.reduce((sum, d) => sum + d.quantite, 0) || 0}</TableCell>
+                        <TableCell>{row.details?.reduce((sum, d) =>  d.famille?.active ===1 ? sum + Number(d.quantite): sum , 0) || 0}</TableCell>
                         <TableCell><Chip 
                           label={row.statut} 
                           color={getStatusColor(row.statut)}

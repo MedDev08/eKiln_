@@ -1,17 +1,8 @@
-// import React from 'react';
-// import Sidebar from '../components/layout/sidebar';
-
-// export default function FamilleAdd() {
-//   return (
-//     <Sidebar initialPath="/settings/familles/add" >
-//     <div>FamilleAdd</div>
-//     </Sidebar>
-//   )
-// }
 
 import React, { useState } from 'react';
 import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
+import { Switch, FormControlLabel } from '@mui/material';
 import {
   Box,
   TextField,
@@ -24,7 +15,8 @@ import {
 export default function FamilleAdd() {
   const [formData, setFormData] = useState({
     nom_famille: '',
-    valeur_trieur: ''
+    valeur_trieur: '',
+    active: true,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,7 +41,8 @@ export default function FamilleAdd() {
         setSuccess(true);
         setFormData({
           nom_famille: '',
-          valeur_trieur: ''
+          valeur_trieur: '',
+          active: true,
         });
       }
     } catch (err) {
@@ -105,7 +98,20 @@ export default function FamilleAdd() {
           onChange={handleChange}
           required
         />
-
+        <Box>
+        <FormControlLabel
+        control={
+        <Switch
+        checked={!!formData.active} 
+        onChange={(e) =>
+        setFormData({ ...formData, active: e.target.checked })
+        }
+        color="success"
+       />
+        }
+        label={formData.active ? "Active" : "Inactive"}
+      />
+      </Box>
         {error && (
           <Alert severity="error" sx={{ mt: 2 }}>
             Error: {error}

@@ -233,7 +233,9 @@ const updateAnneaux = async () => {
         </Grid>
          <Grid item xs={6}>
           <Typography variant="subtitle2">Total pièces :</Typography>
-          <Typography>{chargement.details.reduce((sum, d) => sum + d.quantite, 0)}</Typography>
+          <Typography>{chargement.details.reduce((sum, d) =>
+              d.famille?.active === 1 ? sum + Number(d.quantite): sum , 0)}
+          </Typography>
         </Grid>
         <Grid item xs={6}>
           <Typography variant="subtitle2">Date chargement :</Typography>
@@ -417,18 +419,6 @@ const updateAnneaux = async () => {
         <Button onClick={onClose} sx={{ mr: 2 }}>
           Annuler
         </Button>
-        {/* <Button
-          variant="contained"
-          color="success"
-          disabled={loadingData || isSubmitting}
-          onClick={async () => {
-          await updateAnneaux(); // Mise à jour des anneaux
-          await updateTypeWagon(); 
-          onValidate(validationDate); // Puis validation du chargement
-          }}
-        >
-          Valider
-        </Button> */}
         <Button
           variant="contained"
           color="success"

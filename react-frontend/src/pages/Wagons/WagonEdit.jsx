@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import SidebarChef from '../../components/layout/SidebarChef';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -22,6 +23,7 @@ const WAGON_STATUS = [
 ];
 
 export default function GestionWagonsEdit() {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [formData, setFormData] = useState({
     num_wagon: '',
@@ -75,6 +77,9 @@ export default function GestionWagonsEdit() {
 
       if (response.data.success) {
         setSuccess(true);
+        setTimeout(() => {
+        navigate('/settings/wagons/edit');
+      }, 500);
         setTimeout(() => setSuccess(false), 3000);
       }
     } catch (err) {

@@ -32,7 +32,6 @@ export default function ChargementDetailsModal({
 const [selectedTypeWagon, setSelectedTypeWagon] = useState("");
 const [typeWagons, setTypeWagons] = useState([]);
 const [typeWagonOpen, setTypeWagonOpen] = useState(false);
-const [loadingData, setLoadingData] = useState(true);
 const [isSubmitting, setIsSubmitting] = useState(false);
   const fetchTypeWagons = async () => {
     try {
@@ -52,8 +51,6 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 
     } catch (err) {
       console.error("Erreur chargement types wagons:", err);
-    }finally {
-      setLoadingData(false); // tout est chargé
     }
   };
 
@@ -108,10 +105,14 @@ const getInitialDate = async () => {
     }
 
     //  Ajouter le décalage selon le four
-    if (chargement.id_four === 6)
-      baseDate = new Date(baseDate.getTime() + 16 * 60 * 1000);
-    else if (chargement.id_four === 7)
-      baseDate = new Date(baseDate.getTime() + 34 * 60 * 1000);
+    // if (chargement.id_four === 6)
+    //   baseDate = new Date(baseDate.getTime() + 16 * 60 * 1000);
+    // else if (chargement.id_four === 7)
+    //   baseDate = new Date(baseDate.getTime() + 34 * 60 * 1000);
+     if (data?.cadence) {
+      const decalageMinutes = Math.trunc(1440 / data.cadence); 
+      baseDate = new Date(baseDate.getTime() + decalageMinutes * 60 * 1000);
+    }
 
     return baseDate;
   } catch (error) {
@@ -119,9 +120,7 @@ const getInitialDate = async () => {
     // En cas d'erreur, on retourne une date actuelle + décalage
     let fallbackDate = new Date();
     return fallbackDate;
-  }finally {
-      setLoadingData(false); // tout est chargé
-    }
+  }
 };
 
 // --- Initialiser le state ---
@@ -184,6 +183,7 @@ const updateAnneaux = async () => {
  const role = user?.role?.toLowerCase();
  const showField = chargement.mode === "editer" || role === "admin";
   if (!chargement) return null;
+  const canValidate = validationDate && selectedTypeWagon;     
 
   return (
     <Box
@@ -192,7 +192,7 @@ const updateAnneaux = async () => {
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
-        width: 600,
+        width: { xs: "90%", sm: 600 },
         maxHeight: "80vh",
         overflowY: "auto",
         bgcolor: "background.paper",
@@ -422,7 +422,7 @@ const updateAnneaux = async () => {
         <Button
           variant="contained"
           color="success"
-          disabled={loadingData || isSubmitting} // désactivé si data pas chargée ou submission en cours
+          disabled={!canValidate || isSubmitting} 
           onClick={async () => {
             try {
               setIsSubmitting(true);

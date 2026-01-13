@@ -119,6 +119,7 @@ export default function Familles() {
           color="success" 
           size="small"
           onChange={() => {
+            console.log(params);
         setCurrentRow(params.row);
         setNewActive(!params.value);
         setOpenActiveDialog(true);
@@ -128,6 +129,9 @@ export default function Familles() {
       ),
      
     }, 
+    {
+     field: 'poids', headerName: 'Poids', width: 100
+    },
     {
       field: 'actions',
       headerName: 'Actions',
@@ -349,8 +353,8 @@ export default function Familles() {
                     );
                     // mettre à jour le tableau
                     currentRow.active = newActive;
-                    setFamilles(prev => [...prev]);
-                    setFilteredFamilles(prev => [...prev]);
+                    // setFamilles(prev => [...prev]);
+                    // setFilteredFamilles(prev => [...prev]);
                     setSnackbarMessage(`Famille ${newActive ? 'activée' : 'désactivée'} avec succès !`);
                     setSnackbarSeverity('success');
                     setSnackbarOpen(true);

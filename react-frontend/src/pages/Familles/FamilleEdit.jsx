@@ -21,6 +21,7 @@ export default function FamilleEdit() {
     nom_famille: '',
     valeur_trieur: '',
     active: true,
+    poids:''
   });
   const [loading, setLoading] = useState({ form: true, submit: false });
   const [error, setError] = useState('');
@@ -38,6 +39,7 @@ export default function FamilleEdit() {
           nom_famille: response.data.nom_famille,
           valeur_trieur: response.data.valeur_trieur,
           active: response.data.active,
+          poids:response.data.poids,
         });
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load famille');
@@ -135,6 +137,15 @@ export default function FamilleEdit() {
           type="number"
           inputProps={{ min: 0, step: "0.01" }}
           value={formData.valeur_trieur}
+          onChange={handleChange}
+          required
+        />
+         <TextField
+          fullWidth
+          margin="normal"
+          label="Poids"
+          name="poids"
+          value={formData.poids}
           onChange={handleChange}
           required
         />

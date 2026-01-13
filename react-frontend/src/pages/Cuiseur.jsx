@@ -21,7 +21,7 @@ import { fr } from "date-fns/locale";
 import ChargementDetailsModal from "./Chargement/ChargementDetailsModal";
 import SidebarChef from "../components/layout/SidebarChef";
 import { Circle } from '@mui/icons-material'; 
-
+import ModificationChargement from "./ModificationChargement";
 function Cuiseur() {
   const [wagonsParFour, setWagonsParFour] = useState({});
   const [loading, setLoading] = useState(true);
@@ -30,6 +30,11 @@ function Cuiseur() {
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedChargement, setSelectedChargement] = useState(null);
+  const [familles, setFamilles] = useState([]);
+  const [fours, setFours] = useState([]);
+  const [wagons, setWagons] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [type_wagon, settype_wagon] = useState([]);
 
   //  Fonction de récupération des wagons
   const fetchWagons = async () => {
@@ -72,7 +77,7 @@ function Cuiseur() {
 
   useEffect(() => {
     fetchWagons();
-    const interval = setInterval(fetchWagons, 120000); // refresh toutes les 60s
+    const interval = setInterval(fetchWagons, 600000); // refresh toutes les 10 min 
     return () => clearInterval(interval);
   }, []);
   //  Formatage des dates
@@ -100,6 +105,32 @@ function Cuiseur() {
     setSelectedChargement({...chargement , mode});
     setOpenModal(true);
   };
+   const fetchInitialData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const [famillesRes, foursRes, wagonsRes,usersRes,typeWagonsRes ] = await Promise.all([
+        axios.get("http://localhost:8000/api/familles", { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get("http://localhost:8000/api/fours", { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get("http://localhost:8000/api/wagons1", { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get("http://localhost:8000/api/users", { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get("http://localhost:8000/api/type_wagons", { headers: { Authorization: `Bearer ${token}` } })
+  
+      ]);
+      setFamilles(famillesRes.data);
+      setFours(foursRes.data);
+      setWagons(wagonsRes.data.data);
+      setUsers(usersRes.data.data);
+      // console.log("users",usersRes.data.data);
+      settype_wagon(typeWagonsRes.data);
+      // console.log("type_wagon",typeWagonsRes.data);
+  
+    } catch (err) {
+      console.error("Erreur fetchInitialData :", err);
+    }
+  };
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
 
   //  Sauvegarde validation (date d’entrée)
  const handleSaveValidation = async (validationDate) => {
@@ -118,7 +149,7 @@ function Cuiseur() {
     setSelectedChargement(null);
 
     //  Recharge toutes les données pour mettre à jour wagon et user immédiatement
-    await fetchWagons();
+   // await fetchWagons();
 
   } catch (error) {
     console.error(error.response?.data || error.message);
@@ -322,16 +353,28 @@ function Cuiseur() {
 ) : (
   <Typography> Chargement en cours...</Typography>
 )}
-        {selectedChargement && (
-          <Modal open={openModal} onClose={() => setOpenModal(false)}>
-            <ChargementDetailsModal
+        {/* {selectedChargement && ( */}
+          {/* <Modal open={openModal} onClose={() => setOpenModal(false)}>*/}
+            {/* <ChargementDetailsModal
               chargement={selectedChargement}
               onClose={() => setOpenModal(false)}
               onValidate={handleSaveValidation}
               getStatusColor={getStatusColor}
-            />
-          </Modal>
-        )}
+            /> */}
+          {/* </Modal> */}
+        {/* )} */}
+         <ModificationChargement
+            open={openModal}
+            onClose={() => setOpenModal(false)}
+            selectedChargement={selectedChargement}
+            familles={familles}       
+            fours={fours}            
+            wagons={wagons} 
+            type_wagon={type_wagon}        
+            users={users}
+            onValidate={handleSaveValidation} 
+            onUpdate={fetchWagons}
+          />
       </Box>
     </SidebarChef>
   );

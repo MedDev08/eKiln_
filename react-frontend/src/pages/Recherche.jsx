@@ -127,11 +127,11 @@ export default function Recherche() {
   const [totaux, setTotaux] = useState({ 
     chargements: 0,
     pieces: 0 ,
-    wagons_avec_balaste:0 ,
+    wagons_avec_Ballast:0 ,
     densite: 0 ,
     total_Pieces_actives: 0,
     couvercles:0 ,
-    balastes:0,
+    Ballasts:0,
     densite_finale:0 
   });
   const [density,setDensity]= useState([]);
@@ -233,31 +233,32 @@ useEffect(() => {
     //  setChargements(res.data.data.data || []);   //les chargements sont ici
       const wagons = res.data.data.data || [];
       const wagonsWithDetails = wagons.map(wagon => {
-      const containsBalsate = wagon.details?.some(
-        d => d.famille?.nom_famille?.toLowerCase() === "balaste"
+      const containsBallast = wagon.details?.some(
+        d => d.famille?.nom_famille?.toLowerCase() === "ballast"
       );
-      return { ...wagon, containsBalsate };
+      return { ...wagon, containsBallast };
     });
 
     setChargements(wagonsWithDetails);
+    console.log("chargement",wagonsWithDetails);
     setDensity(res.data.densite_par_four);
     setTotal(res.data.data.total || 0);        // ou last_page*rowsPerPage si total n'existe pas
     setTotaux(res.data.totaux || { chargements: 0,
        pieces: 0 ,
-       wagons_avec_balaste:0 ,
+       wagons_avec_Ballast:0 ,
        densite: 0 ,
        total_Pieces_actives: 0 ,
       couvercles:0,
-      balastes:0 ,
+      Ballasts:0 ,
       densite_finale:0
     });
     setTotaux(res.data.totaux || { chargements: 0,
         pieces: 0 ,
-        wagons_avec_balaste:0 ,
+        wagons_avec_Ballast:0 ,
         densite: 0 ,
         total_Pieces_actives: 0,
         couvercles:0 ,
-        balastes:0 ,
+        Ballasts:0 ,
         densite_finale:0
         });
     } catch (err) {
@@ -265,11 +266,11 @@ useEffect(() => {
     setChargements([]);
     setTotaux({ chargements: 0,
         pieces: 0 ,
-        wagons_avec_balaste:0 ,
+        wagons_avec_Ballast:0 ,
         densite: 0 ,
         total_Pieces_actives: 0 ,
         couvercles:0,
-        balastes:0,
+        Ballasts:0,
         densite_finale:0
         });
     } finally {
@@ -339,10 +340,10 @@ useEffect(() => {
         <Grid container spacing={2} mb={3}>
           {[
             { title: " pièces ", value: totaux.pieces, icon: <ViewModuleIcon fontSize="small" /> },
-            { title: "Wagons Balaste",
-               value: totaux.wagons_avec_balaste ,
+            { title: "Wagons Ballast",
+               value: totaux.wagons_avec_Ballast ,
                icon: <FlagIcon fontSize="small" />,
-               subtitle: `${totaux.balastes}`,
+               subtitle: `${totaux.Ballasts}`,
              },
             { title: "couvercles ", value: totaux.couvercles, icon: <ViewModuleIcon fontSize="small" /> }, 
             { title: "Pièces actives", value: totaux.total_Pieces_actives, icon: <ViewModuleIcon fontSize="small" /> },
@@ -359,94 +360,105 @@ useEffect(() => {
           ))}
         </Grid>
         {/* Filtres */}
-<Paper sx={{ p: 2, mb: 3 }}>
-  <Grid container spacing={1} alignItems="center">
-    <Grid item>
-      <TextField
-        size="small"
-        label="Matricule"
-        value={searchParams.matricule}
-        onChange={e => setSearchParams({ ...searchParams, matricule: e.target.value })}
-        sx={{ width: 120 }}
-      />
-    </Grid>
-    <Grid item>
-      <TextField
-        size="small"
-        label="Wagon"
-        value={searchParams.wagon || ""}
-        onChange={e => setSearchParams({ ...searchParams, wagon: e.target.value })}
-        sx={{ width: 80 }}
-      />
-    </Grid>
-    <Grid item>
-      <TextField
-        size="small"
-        label="Four"
-        value={searchParams.four || ""}
-        onChange={e => setSearchParams({ ...searchParams, four: e.target.value })}
-        sx={{ width: 80 }}
-      />
-    </Grid>
-    <Grid item>
-      <TextField
-        size="small"
-        label="Type Wagon"
-        value={searchParams.type_wagon || ""}
-        onChange={e => setSearchParams({ ...searchParams, type_wagon: e.target.value })}
-        sx={{ width: 100 }}
-      />
-    </Grid>
-     <Grid item>
-      <TextField
-        size="small"
-        label="statut "
-        value={searchParams.statut || ""}
-        onChange={e => setSearchParams({ ...searchParams, statut: e.target.value })}
-        sx={{ width: 100 }}
-      />
-    </Grid>
-    <Grid item>
-      <TextField
-        size="small"
-        type="number"
-        label="Shift"
-        InputProps={{ inputProps: { min: 1, max: 3 } }}
-        value={searchParams.shift || ""}
-        onChange={e => setSearchParams({ ...searchParams, shift: e.target.value })}
-        sx={{ width: 70 }}
-      />
-    </Grid>
-    <Grid item>
-      <TextField
-        size="small"
-        type="date"
-        label="Date début"
-        InputLabelProps={{ shrink: true }}
-        value={searchParams.date_from}
-        onChange={e => setSearchParams({ ...searchParams, date_from: e.target.value })}
-        sx={{ width: 145 }}
-      />
-    </Grid>
-    <Grid item>
-      <TextField
-        size="small"
-        type="date"
-        label="Date fin"
-        InputLabelProps={{ shrink: true }}
-        value={searchParams.date_to}
-        onChange={e => setSearchParams({ ...searchParams, date_to: e.target.value })}
-        sx={{ width: 145 }}
-      />
-    </Grid>
-    <Grid item>
-      <Button variant="contained" onClick={handleFilter} sx={{ height: 40 , mr:1 }}>Filtrer</Button>
-       <Button variant="outlined" color="primary" onClick={fetchHistorique} sx={{ height: 40 }}>
-          Actualiser
-        </Button>
-    </Grid>
-  </Grid>
-</Paper>
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Grid container spacing={1} alignItems="center">
+            <Grid item>
+              <TextField
+                size="small"
+                label="Matricule"
+                value={searchParams.matricule}
+                onChange={e => setSearchParams({ ...searchParams, matricule: e.target.value })}
+                sx={{ width: 120 }}
+              />
+            </Grid>
+            <Grid item>
+              <TextField
+                size="small"
+                label="Chef d'équipe"
+                value={searchParams.chef_matricule || ""}
+                onChange={e =>
+                  setSearchParams({ ...searchParams, chef_matricule: e.target.value })
+                }
+                sx={{ width: 150 }}
+              />
+            </Grid>
+            <Grid item>
+              <TextField
+                size="small"
+                label="Wagon"
+                value={searchParams.wagon || ""}
+                onChange={e => setSearchParams({ ...searchParams, wagon: e.target.value })}
+                sx={{ width: 80 }}
+              />
+            </Grid>
+            <Grid item>
+              <TextField
+                size="small"
+                label="Four"
+                value={searchParams.four || ""}
+                onChange={e => setSearchParams({ ...searchParams, four: e.target.value })}
+                sx={{ width: 80 }}
+              />
+            </Grid>
+            <Grid item>
+              <TextField
+                size="small"
+                label="Type Wagon"
+                value={searchParams.type_wagon || ""}
+                onChange={e => setSearchParams({ ...searchParams, type_wagon: e.target.value })}
+                sx={{ width: 100 }}
+              />
+            </Grid>
+            <Grid item>
+              <TextField
+                size="small"
+                label="statut "
+                value={searchParams.statut || ""}
+                onChange={e => setSearchParams({ ...searchParams, statut: e.target.value })}
+                sx={{ width: 100 }}
+              />
+            </Grid>
+            <Grid item>
+              <TextField
+                size="small"
+                type="number"
+                label="Shift"
+                InputProps={{ inputProps: { min: 1, max: 3 } }}
+                value={searchParams.shift || ""}
+                onChange={e => setSearchParams({ ...searchParams, shift: e.target.value })}
+                sx={{ width: 70 }}
+              />
+            </Grid>
+            <Grid item>
+              <TextField
+                size="small"
+                type="date"
+                label="Date début"
+                InputLabelProps={{ shrink: true }}
+                value={searchParams.date_from}
+                onChange={e => setSearchParams({ ...searchParams, date_from: e.target.value })}
+                sx={{ width: 145 }}
+              />
+            </Grid>
+            <Grid item>
+              <TextField
+                size="small"
+                type="date"
+                label="Date fin"
+                InputLabelProps={{ shrink: true }}
+                value={searchParams.date_to}
+                onChange={e => setSearchParams({ ...searchParams, date_to: e.target.value })}
+                sx={{ width: 145 }}
+              />
+            </Grid>
+            <Grid item>
+              <Button variant="contained" onClick={handleFilter} sx={{ height: 40 , mr:1 }}>Filtrer</Button>
+              <Button variant="outlined" color="primary" onClick={fetchHistorique} sx={{ height: 40 }}>
+                  Actualiser
+                </Button>
+            </Grid>
+          </Grid>
+        </Paper>
         {/* Tableau */}
          {editSuccess && (
                   <Box sx={{ mb: 2 }}>
@@ -487,7 +499,8 @@ useEffect(() => {
                     <TableCell>Date Entrée</TableCell>
                     <TableCell>Date sortie estimée</TableCell>
                     <TableCell>densité</TableCell>
-                    <TableCell>Matricule</TableCell>
+                    <TableCell>Enfourneur</TableCell>
+                    <TableCell>Chef</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -502,7 +515,7 @@ useEffect(() => {
                               <Circle fontSize="small" />
                             </Box>
                           )}
-                          {row.containsBalsate && (
+                          {row.containsBallast && (
                             <Box sx={{ ...boxStyle, color: "red" }}>
                               <FlagIcon fontSize="small" />
                             </Box>
@@ -529,15 +542,18 @@ useEffect(() => {
                         /></TableCell>
                         <TableCell>{formatDate(row.date_entrer)}</TableCell>
                          <TableCell>{row.date_entrer ?formatDate (row.datetime_sortieEstime) : "-"}</TableCell>
-                         <TableCell>{density.length > 0
+                         <TableCell>
+                          {/* {density.length > 0
                           ? (() => {
                               const densiteFour = density.find(f => f.id_four === row.id_four);
                               const detailChargement = densiteFour.details.find(d => d.id_chargement === row.id);
                               return detailChargement ? detailChargement.density_chargement : "-";
                             })()
-                          : "-"}
+                          : "-"} */}
+                          -
                         </TableCell>
                         <TableCell>{row.user?.matricule || "-"}</TableCell>
+                        <TableCell>{row.matricule || "-"}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex' }}>
                           <Tooltip title="Voir détails">
@@ -623,14 +639,14 @@ useEffect(() => {
           //   );
           // }}
           onUpdate={(updated) => {
-            // recalculer automatiquement si le wagon contient "balaste"
-            const containsBalsate = updated.details?.some(
-              d => d.famille?.nom_famille?.toLowerCase() === "balaste"
+            // recalculer automatiquement si le wagon contient "Ballast"
+            const containsBallast = updated.details?.some(
+              d => d.famille?.nom_famille?.toLowerCase() === "Ballast"
             );
             // mettre à jour le tableau avec la nouvelle valeur
             setChargements(prev =>
               prev.map(c =>
-                c.id === updated.id ? { ...updated, containsBalsate } : c
+                c.id === updated.id ? { ...updated, containsBallast } : c
               )
             );
           }}

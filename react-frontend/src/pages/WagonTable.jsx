@@ -10,6 +10,9 @@ import { frFR } from '@mui/x-data-grid/locales';
 import FlagIcon from '@mui/icons-material/Flag';
 import CloseIcon from '@mui/icons-material/Close';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { Circle } from '@mui/icons-material'; 
+import { keyframes } from '@mui/system';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import {
   Modal,
   IconButton,
@@ -33,11 +36,11 @@ import { styled } from '@mui/material/styles';
 const FourTunnel = styled('div')({
     position: 'relative',
     width: '100%',
-    height: '140px', // Un peu plus grand
+    // height: '140px', // Un peu plus grand
     backgroundColor: '#f8f9fa',
     border: '3px solid #3498db',
     borderRadius: '12px',
-    margin: '25px 0',
+    // margin: '25px 0',
     overflow: 'hidden',
     boxShadow: 'inset 0 0 15px rgba(0, 0, 0, 0.1)',
     background: 'linear-gradient(to bottom, #f8f9fa, #e9ecef)',
@@ -96,6 +99,12 @@ const WagonTable = ({ fourNum, id_four }) => {
     return (
       <Box sx={{ width: fullWidth ? '100%' : 'auto' }}>
         <Typography variant="body1" sx={{ mb: 2 }}>
+          <strong>Wagons Ballast :</strong> {data.wagons_avec_Ballast} 
+        </Typography>
+         <Typography variant="body1" sx={{ mb: 2 }}>
+          <strong>Poids total :</strong> {data.total_poids} Kg
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 2 }}>
           <strong>Total pièces à trier:</strong> {data.total_pieces}
         </Typography>
         <Typography variant="body1" sx={{ mb: 2 }}>
@@ -116,7 +125,7 @@ const WagonTable = ({ fourNum, id_four }) => {
                 .sort((a, b) => b.total_pieces - a.total_pieces) // tri décroissant
                 .map((famille, index) => {
                   const isRed = famille.active === 0 ;
-                  // const isRed = ["balaste", "couvercles"].includes(famille.nom_famille?.toLowerCase());
+                  // const isRed = ["Ballast", "couvercles"].includes(famille.nom_famille?.toLowerCase());
                   // console.log("active", famille.active);
                   return (
                     <TableRow key={index}>
@@ -180,7 +189,7 @@ const WagonTable = ({ fourNum, id_four }) => {
       });
 
       const wagons = wagonsResponse.data.chargements;
-      // console.log("wagonsResponse", wagonsResponse.data.chargements);
+      // console.log("wagonsResponse", wagonsResponse);
 
       // Fetch all details in one batch
       const batchResponse = await axios.post(
@@ -198,19 +207,20 @@ const WagonTable = ({ fourNum, id_four }) => {
       // Merge details into wagons
       const wagonsWithDetails = wagons.map(wagon => {
         const wagonDetails = detailsMap.get(wagon.id) || [];
-      // console.log("wagons",wagonDetails);
-        const containsBalsate = wagonDetails.some(
+        const containsBallast = wagonDetails.some(
           d => d.id_famille === 37
         );
-        return { ...wagon, containsBalsate };
+        
+        const hasAnneaux = wagon.anneaux != null;
+        return { ...wagon, containsBallast,hasAnneaux };
       });
 
       setWagonsData(wagonsWithDetails);
+      console.log("wagonsWithDetails",wagonsWithDetails);
       setChargements(wagonsResponse.data.graphe_entrer || []);
       setChargementsShift(wagonsResponse.data.graphe_sortie || []);
       //setCurrentInterval(`${wagonsResponse.data.current_interval.start} - ${wagonsResponse.data.current_interval.end}`);
       setTotalCount(wagonsResponse.data.total_count || wagonsResponse.data.chargements.length);
-
       // Fetch trieurs
       const trieursResponse = await axios.get('http://localhost:8000/api/chargements/calculate-trieurs', {
         headers: { Authorization: `Bearer ${token}` },
@@ -221,7 +231,7 @@ const WagonTable = ({ fourNum, id_four }) => {
         ...trieursResponse.data,
         interval: wagonsResponse.data.current_interval
       });
-
+      
     } catch (error) {
       console.error("Erreur de chargement:", error);
       setWagonsData([]);
@@ -299,11 +309,11 @@ const WagonTable = ({ fourNum, id_four }) => {
 
   const columns = [
     {
-      field: 'containsBalsate',
-      headerName: 'Balaste',
+      field: 'containsBallast',
+      headerName: ' ',
       flex: 1,
       renderCell: (params) => {
-        if (!params.row.containsBalsate) return null; // si pas de balaste, rien
+        // if (!params.row.containsBallast || !pra ) return null; // si pas de Ballast, rien
         return (
           <Box
             sx={{
@@ -316,7 +326,14 @@ const WagonTable = ({ fourNum, id_four }) => {
               fontSize: 20,
             }}
           >
+            {params.row.containsBallast &&(
             <FlagIcon fontSize="small" />
+             )}
+            {params.row.hasAnneaux &&(
+               <Box sx={{ color: "gold" }}>
+                  <Circle fontSize="small" />
+                </Box>
+            )}
           </Box>
         );
       },
@@ -376,15 +393,21 @@ const WagonTable = ({ fourNum, id_four }) => {
       )
     }
   ]
+  const flow = keyframes`
+  0% { transform: translateX(0); opacity: 0.6; }
+  50% { transform: translateX(10px); opacity: 1; }
+  100% { transform: translateX(0); opacity: 0.6; }
+`;
 
   return (
     <>
       <TableContainer component={Paper} sx={{ mb: 4 }}>
-        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="subtitle1">
               Total: {totalCount} wagons
             </Typography>
+            
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -397,7 +420,7 @@ const WagonTable = ({ fourNum, id_four }) => {
             >
               Actualiser
             </Button>
-          </Box>
+          </Box> 
            {/* {["admin", "chef d'equipe","chef"].includes(role) && (
              <>   */}
                 {/* <GrapheShift Chargements={Chargements} />
@@ -405,7 +428,7 @@ const WagonTable = ({ fourNum, id_four }) => {
 
           {["admin", "chef d'equipe", "chef"].includes(role) && (
             <Box sx={{ mt: 3, mb: 4 }}>
-              <FourTunnel sx={{ position: 'relative', height: '180px' }}>
+              <FourTunnel sx={{ position: 'relative', height: '100px' }}>
                 {chargementsShift.map((chargement, index) => {
                   const totalRight = chargementsShift.length;
                   const reversedIndex = (totalRight - 1) - index;
@@ -500,16 +523,68 @@ const WagonTable = ({ fourNum, id_four }) => {
                 })}
               </FourTunnel>
               
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: '#555' }}>
+              {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: '#555' }}>
                 <span>Entrée</span>
                 <span>Sortie</span>
-              </Box>
+              </Box> */}
+            <Box
+              sx={{
+                position: 'relative',
+                width: '120px',
+                height: '20px',
+                mt: -1,
+              }}
+            >
+              {/* ligne */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: 0,
+                  width: '100%',
+                  height: '4px',
+                  backgroundColor: '#3498db',
+                  transform: 'translateY(-50%)',
+                  borderRadius: '2px',
+                }}
+              />
+
+              {/* pointe */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  right: -6,
+                  top: '50%',
+                  width: 0,
+                  height: 0,
+                  borderTop: '8px solid transparent',
+                  borderBottom: '8px solid transparent',
+                  borderLeft: '12px solid #3498db',
+                  transform: 'translateY(-50%)',
+                }}
+              />
+            </Box>
+            {/* <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-start',
+                mt: -1,
+              }}
+            >
+              <ArrowForwardIcon
+                sx={{
+                  fontSize: 36,
+                  color: '#3498db',
+                  animation: `${flow} 1.5s infinite`,
+                }}
+              />
+            </Box> */}
             </Box>
           )}
               
             {/* </>
            )} */}
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap'}}>
             <TextField
               label="Nombre de wagons"
               variant="outlined"
@@ -521,20 +596,21 @@ const WagonTable = ({ fourNum, id_four }) => {
               inputProps={{ min: 1 }} 
               />
              <TextField
-              label="Rechercher par matricule..."
+              label="matricule"
+              //"Rechercher par matricule..."
               variant="outlined"
               size="small"
               value={matricule}
               onChange={(e) => setMatricule(e.target.value)}
-              sx={{ width: 200 }}
+              sx={{ width: 150 }}
               placeholder="Matricule" />
             <TextField
-              label="Rechercher à partir du wagon..."
+              label="Rechercher à partir du wagon"
               variant="outlined"
               size="small"
               value={wagonSearch}
               onChange={(e) => setWagonSearch(e.target.value)}
-              sx={{ width: 200 }}
+              sx={{ width: 150 }}
               placeholder="Numéro de wagon" />
             {["admin", "cuiseur"].includes(role) && (
               <>

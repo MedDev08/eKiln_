@@ -9,7 +9,7 @@ use App\Models\BaseAuditableModel;
 class Famille extends BaseAuditableModel
 {
     protected $primaryKey = 'id_famille';
-    protected $fillable = ['nom_famille', 'valeur_trieur', 'active'];
+    protected $fillable = ['nom_famille', 'valeur_trieur', 'active', 'poids'];
     public function polyvalences()
     {
         return $this->hasMany(Polyvalence::class, 'id_famille', 'id_famille');

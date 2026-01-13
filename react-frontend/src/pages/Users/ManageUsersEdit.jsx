@@ -27,7 +27,8 @@ const ROLES = [
   'chef d\'equipe',
   'trieur',
   'enfourneur',
-  'cuiseur'
+  'cuiseur',
+  'manager'
 ];
 
 export default function ManageUsersEdit() {
@@ -145,7 +146,7 @@ export default function ManageUsersEdit() {
 
       setSuccess(true);
       setTimeout(() => {
-        navigate('/manage-users');
+        navigate('/settings/manage-users');
       }, 500);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -169,7 +170,7 @@ export default function ManageUsersEdit() {
 
   if (loading.form) {
     return (
-      <SidebarChef initialPath="/manage-users/edit">
+      <SidebarChef initialPath="/settings/manage-users/edit">
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <CircularProgress />
         </Box>

@@ -62,13 +62,14 @@ function Enfourneur() {
   const [selectedTypeWagon, setSelectedTypeWagon] = useState("");
   const [typeWagons, setTypeWagons] = useState([]);
   const [typeWagonOpen, setTypeWagonOpen] = useState(false);
-
+  const [users, setUsers] = useState([]);
+  const [selectedMatricule, setSelectedMatricule] = useState("");
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const [famillesRes, foursRes, wagonsRes, userRes,typeWagonsRes] = await Promise.all([
+        const [famillesRes, foursRes, wagonsRes, userRes,typeWagonsRes,usersRes] = await Promise.all([
           axios.get("http://localhost:8000/api/familles", {
             headers: { Authorization: `Bearer ${token}` },
           }),
@@ -84,15 +85,19 @@ function Enfourneur() {
           axios.get("http://localhost:8000/api/type_wagons", {
             headers: { Authorization: `Bearer ${token}` },
           }),
+          axios.get("http://localhost:8000/api/users", {
+            headers: { Authorization: `Bearer ${token}` }
+           }),
         ]);
 
         setFamilles(famillesRes.data);
         setFours(foursRes.data);
         setWAgons(wagonsRes.data.data);
         setUser(userRes.data);
-        setTypeWagons(typeWagonsRes.data);
+        console.log("user",userRes.data);
+        setTypeWagons(typeWagonsRes.data); 
         console.log(typeWagonsRes.data);
-
+        setUsers(usersRes.data.data);
         const initialQuantites = {};
         famillesRes.data.forEach(famille => {
           initialQuantites[famille.id_famille] = 0;
@@ -152,7 +157,7 @@ function Enfourneur() {
 
         const chargementData = {
             id_user: user.id_user,
-            //id_wagon: parseInt(wagonNum),
+            matricule: selectedMatricule,
             id_four: parseInt(selectedFour),
             id_wagon: parseInt(selectedWagon),
             pieces: pieces,
@@ -239,7 +244,7 @@ function Enfourneur() {
       const totalPieces = chargements.reduce((sum, chargement) => {
         return sum + (chargement.details ? chargement.details.reduce(
               (detSum, detail) =>
-                // ["balaste", "couvercles"].includes(detail.famille?.nom_famille?.toLowerCase())
+                // ["Ballast", "couvercles"].includes(detail.famille?.nom_famille?.toLowerCase())
                   (detail.famille.active === 0)
                   ? detSum 
                   : detSum + Number(detail.quantite),
@@ -296,15 +301,6 @@ useEffect(() => {
       }
     }
   };
-//  const getTypeColor = (type) => {
-//   switch(type) {
-//     case 'SP': return '#1976d2';    // bleu
-//     case '1/2 SP': return '#9c27b0'; // violet
-//     case 'RD': return '#388e3c';    // vert
-//     case 'DP': return '#d32f2f';    // rouge
-//     default: return 'inherit';       // gris
-//   }
-// };
   const fourRef = useRef(null);
   const [fourOpen, setFourOpen] = useState(false);
 
@@ -366,7 +362,7 @@ useEffect(() => {
           </Alert>
         )}
 
-        <Paper sx={{ p: 3, mb: 3 }}>
+        <Paper sx={{ p: 1, mb: 3, width:"1170px"}}>
           <Typography variant="h5" component="h2" gutterBottom>
             {showRecap ? "Mes Chargements" : "Nouveau Chargement de Wagon"}
           </Typography>
@@ -422,17 +418,18 @@ useEffect(() => {
               )}
             </>
           ) : (
-            <Box component="form" onSubmit={handleSubmit} noValidate>
-             <Grid container spacing={3}>
+          <Box component="form" onSubmit={handleSubmit} noValidate>
+            <Grid container spacing={2}  alignItems="center">
                 {/* Wagon Autocomplete */}
-                <Grid item xs={12} md={6} width="170px">
+                <Grid item xs={12} sm={6} md={2}>
                   <Autocomplete
                     options={wagons}
-                    getOptionLabel={(wagon) => `Wagon : ${wagon.num_wagon}`}
+                    getOptionLabel={(wagon) => `${wagon.num_wagon}`}
                     value={wagons.find(w => w.id_wagon === selectedWagon) || null}
                     onChange={(event, newValue) => {
                       setSelectedWagon(newValue ? newValue.id_wagon : '');
-                    }}
+                    }} 
+                    sx={{ width: '150px' }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -442,12 +439,11 @@ useEffect(() => {
                          inputRef={wagonRef} 
                       />
                     )}
-                    sx={{ '& .MuiAutocomplete-input': { width: '240px' } }}
                   />
                 </Grid>
 
                 {/* Four Select */}
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} sm={6} md={2}>
                   <FormControl fullWidth margin="normal" required>
                     <InputLabel id="four-select-label">Four</InputLabel>
                     <Select
@@ -468,89 +464,114 @@ useEffect(() => {
                         //   setSelectedTypeWagon(null); // ou "" selon ton state
                         // }
                       }}
-                      sx={{ '& .MuiSelect-select': { width: '130px' } }}
+                      // sx={{ '& .MuiSelect-select': { width: '50px' } }}
+                       sx={{ width: '100px' }}
                     >
                       <MenuItem value="">
                         <em>Sélectionnez un four</em>
                       </MenuItem>
                       {fours.map((four) => (
                         <MenuItem key={four.id_four} value={four.id_four}>
-                          {four.num_four} - Cadence: {four.cadence}
+                          {four.num_four}
+                           - Cadence: {four.cadence}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Grid>
-              <Grid item xs={12} md={6} width="130px">
-               <Autocomplete
-                  options={typeWagons}
-                  getOptionLabel={(tw) => tw.type_wagon}
-                  value={typeWagons.find(tw => tw.id === selectedTypeWagon) || null}
-                  onChange={(event, newValue) => {
-                    setSelectedTypeWagon(newValue ? newValue.id : null);
-                  }}
-                  //  OPTION BACKGROUND
-               renderOption={(props, option) => {
-                const color = option.color;
-                const isColored = color !== "inherit";
-
-                return (
-                  <li
-                    {...props}
-                    style={{
-                      backgroundColor: isColored ? color : "white",
-                      color: isColored ? "white" : "black",
-                      borderRadius: "4px",
-                      margin: "3px 0"
+                <Grid item xs={12} sm={6} md={2}>
+                  <Autocomplete
+                      options={typeWagons}
+                      getOptionLabel={(tw) => tw.type_wagon}
+                      value={typeWagons.find(tw => tw.id === selectedTypeWagon) || null}
+                      onChange={(event, newValue) => {
+                        setSelectedTypeWagon(newValue ? newValue.id : null);
+                      }}
+                      //  OPTION BACKGROUND
+                      renderOption={(props, option) => {
+                        const color = option.color;
+                        const isColored = color !== "inherit";
+                      return (
+                        <li
+                          {...props}
+                          style={{
+                            backgroundColor: isColored ? color : "white",
+                            color: isColored ? "white" : "black",
+                            borderRadius: "4px",
+                            margin: "3px 0"
+                          }}
+                        >
+                          {option.type_wagon}
+                        </li>
+                      );
+                      }}
+                      renderInput={(params) => {
+                        const selected = typeWagons.find(tw => tw.id === selectedTypeWagon);
+                      return (
+                          <TextField
+                            {...params}
+                            label="Type Wagon"
+                            required
+                            margin="normal"
+                            InputProps={{
+                              ...params.InputProps,
+                              startAdornment: selected ? (() => {
+                                  const bg = selected.color;
+                                  const isColored = bg !== "inherit";
+                                return (
+                                    <Chip
+                                      label={selected.type_wagon}
+                                      size="small"
+                                      sx={{
+                                        backgroundColor: isColored ? bg : "white",
+                                        color: isColored ? "white" : "black",
+                                        fontWeight: "bold",
+                                        border: isColored ? "none" : "1px solid #ccc"
+                                      }}
+                                    />
+                                );
+                              })() : null,
+                                inputProps: {
+                                ...params.inputProps,
+                                value: "" // garde ton comportement
+                                }
+                          }}
+                        />
+                     );
+                     }}
+                    open={typeWagonOpen}
+                    onOpen={() => setTypeWagonOpen(true)}
+                    onClose={() => setTypeWagonOpen(false)}
+                    sx={{ width: "110px" }}
+                 />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Autocomplete
+                    options={users.filter(
+                      u =>
+                        u.Role.toLowerCase() === "chef d'equipe" ||
+                        u.Role.toLowerCase() === "chef"
+                    )}
+                    getOptionLabel={(u) => ` ${u.Nom} ${u.Prenom}`}
+                    value={
+                      users.find(u => u.Matricule === selectedMatricule) || null
+                    }
+                    onChange={(e, newValue) => {
+                      setSelectedMatricule(newValue ? newValue.Matricule : "");
                     }}
-                  >
-                    {option.type_wagon}
-                  </li>
-                );
-               }}
-              renderInput={(params) => {
-                const selected = typeWagons.find(tw => tw.id === selectedTypeWagon);
-                return (
-                  <TextField
-                    {...params}
-                    label="Type Wagon"
-                    required
-                    margin="normal"
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: selected ? (() => {
-                        const bg = selected.color;
-                        const isColored = bg !== "inherit";
-
-                        return (
-                          <Chip
-                            label={selected.type_wagon}
-                            size="small"
-                            sx={{
-                              backgroundColor: isColored ? bg : "white",
-                              color: isColored ? "white" : "black",
-                              fontWeight: "bold",
-                              border: isColored ? "none" : "1px solid #ccc"
-                            }}
-                          />
-                        );
-                      })() : null,
-                      inputProps: {
-                        ...params.inputProps,
-                        value: "" // garde ton comportement
-                      }
-                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Chef"
+                        required
+                        margin="normal"
+                        sx={{ width: "240px" }}
+                      />
+                    )}
                   />
-                );
-              }}
-              open={typeWagonOpen}
-              onOpen={() => setTypeWagonOpen(true)}
-              onClose={() => setTypeWagonOpen(false)}
-              sx={{ width: "130px" }}
-                />
-            </Grid>
+                </Grid>
+
                 {/* Paper Fields */}
-                <Grid container spacing={3} justifyContent="flex-end" minWidth={"50%"}>
                   <Grid item xs={12} md={4}>
                     <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
                       <Typography variant="h6" gutterBottom>
@@ -595,7 +616,6 @@ useEffect(() => {
                       </Typography>
                     </Paper>
                   </Grid>
-                </Grid>
               </Grid>
 
               <Typography variant="h6" component="h3" sx={{ mt: 4, mb: 2 }}>
@@ -615,8 +635,8 @@ useEffect(() => {
                           )
                           .filter(Boolean);
 
-                        // 2 Balaste & Couvercles
-                        const balaste = familles.find(f => f.nom_famille === "Balaste");
+                        // 2 Ballast & Couvercles
+                        const Ballast = familles.find(f => f.nom_famille === "Ballast");
                         const couvercles = familles.find(f => f.nom_famille === "Couvercles");
 
                         // 3 Le reste
@@ -624,7 +644,7 @@ useEffect(() => {
                           .filter(
                             f =>
                               !listeSpeciale.map(x => x.toLowerCase()).includes(f.nom_famille.toLowerCase()) &&
-                              !["Balaste", "Couvercles"].includes(f.nom_famille)
+                              !["Ballast", "Couvercles"].includes(f.nom_famille)
                           )
                           .sort((a, b) => a.nom_famille.localeCompare(b.nom_famille));
 
@@ -636,8 +656,8 @@ useEffect(() => {
                         let col1 = ordre.slice(0, mid);
                         let col2 = ordre.slice(mid);
 
-                        // 5 Ajouter Balaste à gauche, Couvercles à droite
-                        if (balaste) col1.push(balaste);
+                        // 5 Ajouter Ballast à gauche, Couvercles à droite
+                        if (Ballast) col1.push(Ballast);
                         if (couvercles) col2.push(couvercles);
 
                         const maxRows = Math.max(col1.length, col2.length);

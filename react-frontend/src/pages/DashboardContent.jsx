@@ -185,25 +185,6 @@ const theme = createTheme({
 // Component: StatCard
 const StatCard = ({ title, value, details, icon }) => {
   const [openTooltip, setOpenTooltip] = useState(false);
-  
-  const densityTooltip = details ? (
-    <Box sx={{ p: 1 }}>
-      <Typography variant="subtitle2">Détails Densité ({details.interval.start} - {details.interval.end})</Typography>
-      <Divider sx={{ my: 1 }} />
-      <Grid container spacing={1}>
-        <Grid item xs={6}>
-          <Typography variant="body2"><strong>Four F3:</strong></Typography>
-          <Typography variant="body2">Total: {details.f3.total_pieces} pièces</Typography>
-          <Typography variant="body2">Densité: {details.f3.density} </Typography>
-        </Grid>
-        <Grid item xs={6}>
-          <Typography variant="body2"><strong>Four F4:</strong></Typography>
-          <Typography variant="body2">Total: {details.f4.total_pieces} pièces</Typography>
-          <Typography variant="body2">Densité: {details.f4.density} </Typography>
-        </Grid>
-      </Grid>
-    </Box>
-  ) : null;
 
   return (
     <Card sx={{ 
@@ -241,33 +222,6 @@ const StatCard = ({ title, value, details, icon }) => {
             }}>
               {icon}
             </Box>
-          )}
-          {title === 'Densite' && (
-            <Tooltip 
-              title={densityTooltip} 
-              arrow
-              open={openTooltip}
-              onOpen={() => setOpenTooltip(true)}
-              onClose={() => setOpenTooltip(false)}
-              disableFocusListener
-              disableHoverListener
-              disableTouchListener
-            >
-              <IconButton 
-                size="small" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenTooltip(!openTooltip);
-                }}
-                sx={{ 
-                  ml: 0.5, 
-                  verticalAlign: 'middle',
-                  color: theme.palette.text.secondary
-                }}
-              >
-                <InfoIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
           )}
         </Box>
         <Typography 
@@ -335,26 +289,38 @@ const WagonsTabs = () => {
 const DashboardContent = () => {
   const [filterActive, setFilterActive] = useState(true);
   const [statsData, setStatsData] = useState([
-    { 
-      title: 'Wagon en cours', 
-      value: '0',
-      icon: <LocalShippingIcon fontSize="small" />
-    },
-    { 
-      title: 'Pièces en cours', 
-      value: '0',
-      icon: <ViewModuleIcon fontSize="small" />
-    },
-    { 
-      title: 'Trieurs disponible', 
-      value: '0',
-      icon: <PeopleIcon fontSize="small" />
-    },
-    { 
-      title: 'Densite', 
-      value: '0',
-      icon: <BarChartIcon fontSize="small" />
-    },
+    // { 
+    //   title: 'Wagon en cours', 
+    //   value: '0',
+    //   icon: <LocalShippingIcon fontSize="small" />
+    // },
+    // { 
+    //   title: 'Pièces en cours', 
+    //   value: '0',
+    //   icon: <ViewModuleIcon fontSize="small" />
+    // },
+    // { 
+    //   title: 'Trieurs disponible', 
+    //   value: '0',
+    //   icon: <PeopleIcon fontSize="small" />
+    // },
+    // { 
+    //   title: 'Densite', 
+    //   value: '0',
+    //   icon: <BarChartIcon fontSize="small" />
+    // },
+    // { 
+    //   title: 'Densité F3', 
+    //   value: '0',
+    //   icon: <BarChartIcon fontSize="small" />,
+    //   detailsKey: 'f3'
+    // },
+    // { 
+    //   title: 'Densité F4', 
+    //   value: '0',
+    //   icon: <BarChartIcon fontSize="small" />,
+    //   detailsKey: 'f4'
+    // }
   ]);
   const [densityDetails, setDensityDetails] = useState({
     f3: { totalPieces: 0, density: 0 },
@@ -374,18 +340,17 @@ const DashboardContent = () => {
         const response = await axios.get("http://localhost:8000/api/chargements/density", {
             headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("Réponse densité:", response.data); 
-
+        // console.log("Réponse densité:", response.data); 
         setStatsData(prevStats => {
-            const newStats = [...prevStats];
-            newStats[3] = { 
-                ...newStats[3], 
-                value: response.data.global_density.toString(),
-                details: response.data // Stocker les détails pour le tooltip
-            };
-            return newStats;
-        });
-
+              return prevStats.map(stat => {
+                if (stat.detailsKey === 'f3') {
+                  return { ...stat, value: response.data.f3.density.toString(), details: response.data.f3 };
+                } else if (stat.detailsKey === 'f4') {
+                  return { ...stat, value: response.data.f4.density.toString(), details: response.data.f4 };
+                }
+                return stat;
+              });
+            });
         setDensityDetails({
             f3: {
                 totalPieces: response.data.f3.total_pieces,
@@ -402,27 +367,6 @@ const DashboardContent = () => {
     }
 };
 
-  const fetchActiveTrieursCount = async () => {
-    try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:8000/api/trieurs/count-active", {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setStatsData(prevStats => {
-            const newStats = [...prevStats];
-            newStats[2] = { ...newStats[2], value: response.data.count.toString() };
-            return newStats;
-        });
-    } catch (error) {
-        console.error("Erreur lors du chargement du nombre de trieurs actifs:", error);
-        setStatsData(prevStats => {
-            const newStats = [...prevStats];
-            newStats[2] = { ...newStats[2], value: 'N/A' };
-            return newStats;
-        });
-    }
-};
 
   const fetchTrieursNeeded = async () => {
     try {
@@ -459,60 +403,25 @@ const DashboardContent = () => {
   };
 
 
-  const fetchCookingWagons = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/api/wagons/cooking-count');
-      const count = response.data.count;
-      
-      setStatsData(prevStats => {
-        const newStats = [...prevStats];
-        newStats[0] = { ...newStats[0], value: count.toString() };
-        return newStats;
-      });
-    } catch (error) {
-      console.error('Error fetching cooking wagons count:', error);
-    }
-  };
-
-  const fetchTotalPieces = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/api/pieces/Somme');
-      const count = response.data.count || 0;
-      
-      setStatsData(prevStats => {
-        const newStats = [...prevStats];
-        newStats[1] = { ...newStats[1], value: count.toString() };
-        return newStats;
-      });
-    } catch (error) {
-      console.error('Error fetching total pieces count:', error);
-      setStatsData(prevStats => {
-        const newStats = [...prevStats];
-        newStats[1] = { ...newStats[1], value: 'N/A' };
-        return newStats;
-      });
-    }
-  };
-
   const handleRefresh = () => {
-    fetchCookingWagons();
-    fetchTotalPieces();
+    // fetchCookingWagons();
+    // fetchTotalPieces();
     fetchTrieursNeeded();
-    fetchActiveTrieursCount();
+    // fetchActiveTrieursCount();
     fetchDensity();
   };
 
   useEffect(() => {
-    fetchCookingWagons();
-    fetchTotalPieces();
+    // fetchCookingWagons();
+    // fetchTotalPieces();
     fetchTrieursNeeded();
-    fetchActiveTrieursCount();
+    // fetchActiveTrieursCount();
     fetchDensity();
     const interval = setInterval(() => {
-      fetchCookingWagons();
-      fetchTotalPieces();
+      // fetchCookingWagons();
+      // fetchTotalPieces();
       fetchTrieursNeeded();
-      fetchActiveTrieursCount();
+      // fetchActiveTrieursCount();
       fetchDensity();
     }, 30000);
     return () => clearInterval(interval);
@@ -522,54 +431,6 @@ const DashboardContent = () => {
   return (
    
     <Box sx={{ p: 3 }}>
-      {/* Header amélioré */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 4,
-        backgroundColor: 'white',
-        p: 3,
-        borderRadius: 3,
-        boxShadow: '0 4px 20px 0 rgba(0,0,0,0.05)'
-      }}>
-        <Box>
-          <Typography 
-            variant="h4" 
-            component="h1"
-            sx={{ 
-              fontWeight: 700,
-              color: theme.palette.primary.dark
-            }}
-          >
-            Tableau de bord
-          </Typography>
-          <Typography 
-            variant="body1"
-            sx={{
-              color: theme.palette.text.secondary
-            }}
-          >
-            Aperçu global de la production
-          </Typography>
-        </Box>
-        <Box sx={{ textAlign: 'right' }}>
-          <Button 
-            variant="contained" 
-            startIcon={<RefreshIcon />}
-            onClick={handleRefresh}
-            sx={{
-              backgroundColor: theme.palette.primary.main,
-              '&:hover': {
-                backgroundColor: theme.palette.primary.dark
-              }
-            }}
-          >
-            Actualiser
-          </Button>
-        </Box>
-      </Box>
-
       {/* Stats Cards améliorées */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statsData.map((stat, index) => (

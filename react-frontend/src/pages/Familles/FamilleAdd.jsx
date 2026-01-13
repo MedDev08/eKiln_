@@ -17,6 +17,7 @@ export default function FamilleAdd() {
     nom_famille: '',
     valeur_trieur: '',
     active: true,
+    poids:'',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -43,6 +44,7 @@ export default function FamilleAdd() {
           nom_famille: '',
           valeur_trieur: '',
           active: true,
+          poids:'',
         });
       }
     } catch (err) {
@@ -95,6 +97,16 @@ export default function FamilleAdd() {
           type="number"
           inputProps={{ min: 0, step: "0.01" }}
           value={formData.valeur_trieur}
+          onChange={handleChange}
+          required
+        />
+         <TextField
+          fullWidth
+          margin="normal"
+          label="Poids"
+          name="poids"
+          type="number"
+          value={formData.poids}
           onChange={handleChange}
           required
         />

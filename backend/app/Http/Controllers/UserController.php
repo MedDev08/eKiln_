@@ -33,7 +33,7 @@ class UserController extends Controller
             'matricule' => 'required|unique:users',
             'nom' => 'required',
             'prenom' => 'required',
-            'role' => 'required|in:admin,chef d\'equipe,enfourneur,trieur,jeune four',
+            'role' => 'required|in:admin,chef d\'equipe,enfourneur,trieur,jeune four,manager,cuiseur',
             'password' => 'nullable|string|min:4'
         ]);
 

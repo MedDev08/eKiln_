@@ -53,6 +53,9 @@ function Login() {
         case "cuiseur":
           navigate("/cuiseur");
           break;
+        case "manager":
+          navigate("/recherche");
+          break;
         default:
           navigate("/");
       }

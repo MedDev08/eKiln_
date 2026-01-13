@@ -11,7 +11,7 @@ use Carbon\Carbon;
 class Chargement extends BaseAuditableModel
 {
     use SoftDeletes;
-    protected $fillable = ['id_user', 'id_wagon', 'id_four', 'id_typeWagon', 'statut', 'datetime_sortieEstime'];
+    protected $fillable = ['id_user', 'id_wagon', 'id_four', 'id_typeWagon', 'statut', 'datetime_sortieEstime', 'matricule'];
     protected $dates = ['deleted_at'];
     protected static function booted()
     {

@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { styled } from '@mui/system';
+import FlagIcon from '@mui/icons-material/Flag';
 
 const Header = ({ title, subtitle }) => (
     <Box mb="30px">
@@ -63,10 +64,6 @@ const WagonPosition = styled('div')(({ progress,type_wagon
         zIndex: 10,
         boxShadow: '0 5px 15px rgba(0, 0, 0, 0.2)',
     },
-    // // Animation pour les wagons en cuisson
-    // ...(status?.toLowerCase() === 'en cuisson' && {
-    //     animation: 'pulse 2s infinite',
-    // }),
 }));
 
 
@@ -74,7 +71,9 @@ const formatDuration = (milliseconds) => {
     const totalSeconds = Math.floor(milliseconds / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
-    
+    if(hours == 0){
+        return `${minutes}m`
+    }
     return `${hours}h ${minutes}m`;
 };
 
@@ -92,6 +91,8 @@ const WagonVisualization = () => {
     const [now, setNow] = useState(new Date());
     const [anneaux, setAnneaux] = useState([]);
     const [anneauxCoche, setAnneauxCoche] = useState(false);
+    const [ballastWagons, setBallastWagons] = useState([]);
+
 
    
     const fetchAnneaux = async () => {
@@ -120,9 +121,11 @@ const WagonVisualization = () => {
     useEffect(() => {
         const loadFromLocalStorage = () => {
             const savedData = localStorage.getItem('wagonVisualizationData');
+            console.log('wagonVisualizationData',savedData);
             if (savedData) {
                 try {
                     const parsedData = JSON.parse(savedData);
+                    console.log('parse',parsedData);
                     if (parsedData.four3 && parsedData.four4) {
                         setFourData({
                             ...parsedData,
@@ -229,6 +232,7 @@ const WagonVisualization = () => {
                 fin: new Date(response.data.FinCuissonEstimee).toLocaleString()
             });
             setSelectedChargement(chargement.id_chargement);
+            setAnneauxCoche(anneaux.includes(chargement.id_chargement));
             setOpenModal(true);
         } catch (error) {
             console.error('Details Error:', error);
@@ -277,10 +281,10 @@ const WagonVisualization = () => {
     };
 
     // Nouveau rendu pour le four avec animation
-    const renderFourTunnel = (fourNumber, chargements) => (
+   const renderFourTunnel = (fourNumber, chargements) => (
         <div className="four-section" key={fourNumber}>
-            <h2>Four {fourNumber}</h2>
-            <FourTunnel>
+            <h2>Four {fourNumber}</h2>           
+             <FourTunnel>
                 {chargements.map(chargement => {
                     const progress = calculateProgress(chargement);
                     const timeLeft = calculateTimeLeft(chargement);
@@ -302,14 +306,15 @@ const WagonVisualization = () => {
                                 type_wagon={chargement.color}
                                 onClick={() => handleBoxClick(chargement)}
                             >     
-                               {console.log("TEST ", chargement.color)}
                                 <div style={{ fontSize: '12px', fontWeight: 'bold' }}>
                                     {chargement.num_wag}
                                 </div>
                                 <div style={{ 
                                     fontSize: '10px',
                                     color: '#333',
-                                    marginTop: '5px'
+                                    marginTop: '5px',
+                                    // left: '85%',
+                                    // transform: 'translateX(-50%)'
                                 }}>
                                     {timeLeft}
                                 </div>                      
@@ -323,7 +328,26 @@ const WagonVisualization = () => {
                                         height: '12px',
                                         borderRadius: '50%',
                                         backgroundColor: 'gold',
-                                        border: '1px solid #fff',
+                                        border: '1px solid #000000',
+                                    }} />
+                                )}
+                                {chargement.has_famille_37 && (
+                                    //  <FlagIcon fontSize="small" color ='error' 
+                                    //   sx={{
+                                    //         position: 'absolute',
+                                    //         bottom: '0.5px',
+                                    //         left: '85%',
+                                    //         transform: 'translateX(-50%)',
+                                    //     }} />
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '0px',
+                                        right: '1px',
+                                        width: '12px',
+                                        height: '12px',
+                                        borderRadius: '50%',
+                                        backgroundColor: 'red',
+                                        border: '1px solid #000000',
                                     }} />
                                 )}
                             </WagonPosition>
@@ -332,20 +356,20 @@ const WagonVisualization = () => {
                 })}
             </FourTunnel>
             <LinearProgress 
-    variant="determinate" 
-    value={100} 
-    sx={{ 
-        height: '12px', 
-        borderRadius: '6px',
-        backgroundColor: '#e9ecef',
-        margin: '15px 0 5px 0',
-        '& .MuiLinearProgress-bar': {
-            backgroundColor: '#3498db',
-            borderRadius: '6px',
-            backgroundImage: 'linear-gradient(to right, #3498db, #2c3e50)',
-        }
-    }} 
-/>
+                variant="determinate" 
+                value={100} 
+                sx={{ 
+                    height: '12px', 
+                    borderRadius: '6px',
+                    backgroundColor: '#e9ecef',
+                    margin: '15px 0 5px 0',
+                    '& .MuiLinearProgress-bar': {
+                        backgroundColor: '#3498db',
+                        borderRadius: '6px',
+                        backgroundImage: 'linear-gradient(to right, #3498db, #2c3e50)',
+                    }
+                }} 
+            />
             <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between',
@@ -425,7 +449,7 @@ const WagonVisualization = () => {
                                         checked={anneauxCoche}
                                         onChange={(e) => {
                                             setAnneauxCoche(e.target.checked);
-                                            updateAnneaux();
+                                           // updateAnneaux();
                                         }}
                                         />
                                         <Typography ml={1}><strong>Anneaux Bullers</strong></Typography>

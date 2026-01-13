@@ -34,6 +34,7 @@ class ChargementController extends Controller
             'pieces' => 'required|array',
             'pieces.*.id_famille' => 'required|exists:familles,id_famille',
             'pieces.*.quantite' => 'required|integer|min:1',
+            'matricule' => 'required|string|max:100',
         ]);
 
         // Vérifier le statut du wagon
@@ -53,6 +54,7 @@ class ChargementController extends Controller
             'id_typeWagon' => $request->id_typeWagon,
             'datetime_chargement' => now(),
             'statut' => 'en cours',
+            'matricule' => $request->matricule ?? 'Null',
         ]);
 
         // Mettre à jour le statut du wagon
@@ -341,7 +343,7 @@ class ChargementController extends Controller
             }
 
             // Get fresh data
-            $f3 = Chargement::with(['wagon', 'four', 'type_wagon', 'anneaux'])
+            $f3 = Chargement::with(['wagon', 'four', 'type_wagon', 'anneaux', 'details'])
                 ->where('id_four', 6)
                 ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir'])
                 ->orderBy('datetime_sortieEstime', 'asc')
@@ -356,11 +358,13 @@ class ChargementController extends Controller
                         'debut_cuisson' => $chargement->datetime_chargement,
                         'FinCuissonEstimee' => $chargement->datetime_sortieEstime,
                         'username' => $chargement->user->matricule ?? 'Unknown',
-                        'anneaux' => $chargement->anneaux
+                        'anneaux' => $chargement->anneaux,
+                        'has_famille_37' => $chargement->details
+                            ->contains(fn($detail) => $detail->id_famille == 37),
                     ];
                 });
 
-            $f4 = Chargement::with(['wagon', 'four', 'type_wagon', 'anneaux'])
+            $f4 = Chargement::with(['wagon', 'four', 'type_wagon', 'anneaux', 'details'])
                 ->where('id_four', 7)
                 ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir'])
                 ->orderBy('datetime_sortieEstime', 'asc')
@@ -375,7 +379,9 @@ class ChargementController extends Controller
                         'debut_cuisson' => $chargement->datetime_chargement,
                         'FinCuissonEstimee' => $chargement->datetime_sortieEstime,
                         'username' => $chargement->user->matricule ?? 'Unknown',
-                        'anneaux' => $chargement->anneaux
+                        'anneaux' => $chargement->anneaux,
+                        'has_famille_37' => $chargement->details
+                            ->contains(fn($detail) => $detail->id_famille == 37),
                     ];
                 });
 
@@ -413,6 +419,7 @@ class ChargementController extends Controller
             'details' => $chargement->details->map(function ($detail) {
                 return [
                     'nom_famille' => $detail->famille->nom_famille,
+                    'id_famille' => $detail->famille->id_famille,
                     'quantite' => $detail->quantite
                 ];
             }),
@@ -730,7 +737,7 @@ class ChargementController extends Controller
             }
         }
 
-        $query = Chargement::with(['wagon', 'four', 'details', 'type_wagon', 'user'])
+        $query = Chargement::with(['wagon', 'four', 'details', 'type_wagon', 'user', 'anneaux'])
             ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir', 'sorti'])
             ->orderBy('datetime_sortieEstime', 'asc');
 
@@ -793,7 +800,9 @@ class ChargementController extends Controller
                         ? Carbon::parse($chargement->datetime_sortieEstime)->format('H:i')
                         : 'N/A',
                     'statut' => $chargement->statut,
-                    'matricule' => $chargement->user->matricule ?? 'N/A'
+                    'matricule' => $chargement->user->matricule ?? 'N/A',
+                    'anneaux' => $chargement->anneaux,
+
                 ];
             });
         $graphe_sortie = $chargements
@@ -904,8 +913,10 @@ class ChargementController extends Controller
             $query->whereBetween('datetime_sortieEstime', [$start, $end]);
         }
 
-        if ($limit) {
-            $query->limit($limit);
+        if (!$dateFrom && !$dateTo) {
+            if ($limit) {
+                $query->limit($limit);
+            }
         }
 
         $chargements = $query->get();
@@ -937,31 +948,38 @@ class ChargementController extends Controller
     {
         $famillesData = [];
         $totalPieces = 0;
-
+        $totalPoids = 0;
+        $wagons_avec_Ballast = 0;
         foreach ($chargements as $chargement) {
+            $contientBallast = false;
             foreach ($chargement->details as $detail) {
                 $idFamille = $detail->id_famille;
                 $quantite = $detail->quantite;
                 $famille = $detail->famille;
+                $poidsParPiece = $famille->poids ?? 0;
+                if ($famille->id_famille == 37) {
+                    $contientBallast = true;
+                }
                 if (!isset($famillesData[$idFamille])) {
                     $famillesData[$idFamille] = [
                         'id_famille' => $idFamille,
                         'nom_famille' => $famille->nom_famille,
                         'active' => $famille->active,
                         'total_pieces' => 0,
+                        'total_poids' => 0,
                         'valeur_trieur' => $famille->valeur_trieur ?? 1,
                         'trieurs_needed' => 0
                     ];
                 }
                 $famillesData[$idFamille]['total_pieces'] += $quantite;
-                // $totalPieces += $quantite;
-                //  ne pas compter balaste et couvercles dans le total global
-                // if (!in_array(strtolower($famille->nom_famille), ['balaste', 'couvercles'])) {
-                //     $totalPieces += $quantite;
-                // }
+                $famillesData[$idFamille]['total_poids'] += $quantite * $poidsParPiece;
+                $totalPoids += $quantite * $poidsParPiece;
                 if ($famille->active === 1) {
                     $totalPieces += $quantite;
                 }
+            }
+            if ($contientBallast) {
+                $wagons_avec_Ballast++;
             }
         }
 
@@ -969,12 +987,15 @@ class ChargementController extends Controller
         foreach ($famillesData as &$famille) {
             $trieursNeeded = $famille['total_pieces'] * (1 / $famille['valeur_trieur']);
             $famille['trieurs_needed'] = round($trieursNeeded, 2);
+            $famille['total_poids'] = round($famille['total_poids'], 2);
             $totalTrieursNeeded += $trieursNeeded;
         }
 
         return [
             'total_pieces' => $totalPieces,
+            'total_poids' => round($totalPoids, 2),
             'total_trieurs_needed' => round($totalTrieursNeeded, 2),
+            'wagons_avec_Ballast' => $wagons_avec_Ballast,
             'familles' => array_values($famillesData)
         ];
     }
@@ -1007,7 +1028,7 @@ class ChargementController extends Controller
         $f3Chargements = Chargement::with(['details' => function ($query) {
             $query->whereHas('famille', function ($q) {
                 $q->where('nom_famille', 'like', '%couvercle%');
-                // ->where('nom_famille', 'not like', '%Balaste%');
+                // ->where('nom_famille', 'not like', '%Ballast%');
             });
         }])
             ->where('id_four', 6)
@@ -1025,7 +1046,7 @@ class ChargementController extends Controller
         $f4Chargements = Chargement::with(['details' => function ($query) {
             $query->whereHas('famille', function ($q) {
                 $q->where('nom_famille', 'like', '%couvercle%');
-                // ->where('nom_famille', 'not like', '%Balaste%');
+                // ->where('nom_famille', 'not like', '%Ballast%');
             });
         }])
             ->where('id_four', 7)
@@ -1415,10 +1436,11 @@ class ChargementController extends Controller
                 ->whereNotNull('date_entrer')
                 ->orderBy('date_entrer', 'desc')
                 ->first();
-
+            $four = Four::find($idFour);
             return response()->json([
                 'success' => true,
-                'date_entrer' => $lastChargement ? $lastChargement->date_entrer : null
+                'date_entrer' => $lastChargement ? $lastChargement->date_entrer : null,
+                'cadence' => $four ? $four->cadence : null
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -1465,6 +1487,7 @@ class ChargementController extends Controller
             $type_wagon = $request->input('type_wagon');
             $shift = $request->input('shift');
             $statut = $request->input('statut');
+            $chefMatricule = $request->input('chef_matricule');
             $perPage = $request->input('per_page', 10);
 
             //  Requête filtrée
@@ -1472,7 +1495,8 @@ class ChargementController extends Controller
                 ->when($dateFrom, fn($q) => $q->whereDate('datetime_chargement', '>=', $dateFrom))
                 ->when($dateTo, fn($q) => $q->whereDate('datetime_chargement', '<=', $dateTo))
                 ->when($matricule, fn($q) => $q->whereHas('user', fn($q2) => $q2->where('matricule', 'like', "%{$matricule}%")))
-                ->when($wagon, fn($q) => $q->whereHas('wagon', fn($q2) => $q2->where('num_wagon', 'like', "%{$wagon}%")))
+                ->when($chefMatricule, fn($q) => $q->where('matricule', 'like', "%{$chefMatricule}%"))
+                ->when($wagon, fn($q) => $q->whereHas('wagon', fn($q2) => $q2->where('num_wagon', $wagon)))
                 ->when($four, fn($q) => $q->whereHas('four', fn($q2) => $q2->where('num_four', 'like', "%{$four}%")))
                 ->when($type_wagon, fn($q) => $q->whereHas('type_wagon', fn($q2) => $q2->where('type_wagon', 'like', "%{$type_wagon}%")));
             if ($statut) {
@@ -1543,17 +1567,17 @@ class ChargementController extends Controller
                         'totale_pieces' => $i,
                     ];
                 }
-                // Compter les wagons Balaste seul ou Balaste + Couvercle
-                $wagonsBalasteCouvercle = $chargementsDuFour->filter(function ($chargement) {
-                    // On ne regarde que les wagons qui contiennent Balaste
+                // Compter les wagons Ballast seul ou Ballast + Couvercle
+                $wagonsBallastCouvercle = $chargementsDuFour->filter(function ($chargement) {
+                    // On ne regarde que les wagons qui contiennent Ballast
                     $familles = $chargement->details->pluck('famille.nom_famille')
                         ->map(fn($f) => strtolower($f))
                         ->unique();
-                    return $familles->contains('balaste') && $familles->every(fn($f) => in_array($f, ['balaste', 'couvercles']));
+                    return $familles->contains('Ballast') && $familles->every(fn($f) => in_array($f, ['Ballast', 'couvercles']));
                 })->count();
                 $totalChargements = $chargementsDuFour->count();
                 // Calculer la densité finale en excluant ces wagons
-                $totalChargementsPourDensity = $totalChargements - $wagonsBalasteCouvercle;
+                $totalChargementsPourDensity = $totalChargements - $wagonsBallastCouvercle;
                 $densite_finale = $totalChargementsPourDensity > 0
                     ? round($totalDensity / $totalChargementsPourDensity, 2)
                     : 0;
@@ -1568,17 +1592,17 @@ class ChargementController extends Controller
                     'details' => $detailsParFour,
                 ];
             }
-            $totalBalasteWagons = $all->sum(
+            $totalBallastWagons = $all->sum(
                 fn($c) =>
-                $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'balaste')->count()
+                $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'ballast')->count()
             );
             $totalcouvercles = $all->sum(
                 fn($c) =>
                 $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'couvercles')->sum('quantite')
             );
-            $totalbalaste = $all->sum(
+            $totalBallast = $all->sum(
                 fn($c) =>
-                $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'balaste')->sum('quantite')
+                $c->details->filter(fn($d) => strtolower($d->famille->nom_famille) === 'ballast')->sum('quantite')
             );
             $totalPiecesactives = $all->sum(
                 fn($c) =>
@@ -1598,8 +1622,8 @@ class ChargementController extends Controller
                 'totaux' => [
                     'chargements' => $totalChargements,
                     'pieces' => $totalPieces,
-                    'wagons_avec_balaste' => $totalBalasteWagons,
-                    'balastes' => $totalbalaste,
+                    'wagons_avec_Ballast' => $totalBallastWagons,
+                    'Ballasts' => $totalBallast,
                     'couvercles'  => $totalcouvercles,
                     'total_Pieces_actives' => $totalPiecesactives,
                     'densite' => $densite,
@@ -1721,36 +1745,78 @@ class ChargementController extends Controller
 
             $start = Carbon::parse($request->dateFrom)->setTime(6, 0, 0);
             $end   = Carbon::parse($request->dateTo)->addDay()->setTime(6, 0, 0);
-
-            $rows = DB::table('detail_chargements as dc')
-                ->join('chargements as c', 'c.id', '=', 'dc.id_chargement')
-                ->join('familles as f', 'f.id_famille', '=', 'dc.id_famille')
+            $dateExpression = "CASE
+                                    WHEN TIME(c.date_entrer) >= '06:00:00'
+                                    THEN DATE(c.date_entrer)
+                                    ELSE DATE_SUB(DATE(c.date_entrer), INTERVAL 1 DAY)
+                                END";
+            $baseDetailQuery = function () use ($numFour, $start, $end) {
+                return DB::table('detail_chargements as dc')
+                    ->join('chargements as c', 'c.id', '=', 'dc.id_chargement')
+                    ->join('familles as f', 'f.id_famille', '=', 'dc.id_famille')
+                    ->join('fours as fo', 'fo.id_four', '=', 'c.id_four')
+                    ->where('fo.num_four', $numFour)
+                    ->whereBetween('c.date_entrer', [$start, $end]);
+            };
+            $baseChargementQuery = DB::table('chargements as c')
                 ->join('fours as fo', 'fo.id_four', '=', 'c.id_four')
                 ->where('fo.num_four', $numFour)
-                ->whereBetween('c.date_entrer', [$start, $end])
-                ->selectRaw("
-                CASE
-                    WHEN TIME(c.date_entrer) >= '06:00:00'
-                    THEN DATE(c.date_entrer)
-                    ELSE DATE_SUB(DATE(c.date_entrer), INTERVAL 1 DAY)
-                END as jour,
-                f.id_famille,
-                f.nom_famille,
-                SUM(dc.quantite) as total
-            ")
+                ->whereBetween('c.date_entrer', [$start, $end]);
+
+            $wagonsParJour = (clone $baseChargementQuery)
+                ->selectRaw("$dateExpression as jour,
+                    COUNT(DISTINCT c.id) as nombre_wagons,
+                     MAX(fo.cadence) as cadence_theorique
+                ")
+                ->groupBy('jour')
+                ->get()
+                ->keyBy('jour');
+            $wagonsBallastParJour = $baseDetailQuery()
+                ->where('f.nom_famille', 'Ballast')
+                ->selectRaw("$dateExpression as jour, 
+                    COUNT(DISTINCT c.id) as nombre_wagons_Ballast
+                ")
+                ->groupBy('jour')
+                ->pluck('nombre_wagons_Ballast', 'jour');
+
+            //  Totaux par famille
+            $rows = $baseDetailQuery()
+                ->selectRaw("$dateExpression as jour,
+                    f.id_famille,
+                    f.nom_famille,
+                    SUM(dc.quantite) as total,
+                    SUM(dc.quantite * IFNULL(f.poids, 0)) as total_poids
+               ")
                 ->groupBy('jour', 'f.id_famille', 'f.nom_famille')
                 ->orderBy('jour')
                 ->get();
+            $poidsParJour = $baseDetailQuery()
+                ->selectRaw("$dateExpression as jour,
+                SUM(dc.quantite * IFNULL(f.poids, 0)) as total_poids
+                ")
+                ->groupBy('jour')
+                ->pluck('total_poids', 'jour');
 
             $data = [];
             foreach ($rows as $row) {
-                $data[$row->jour][] = [
+                if (!isset($data[$row->jour])) {
+                    $data[$row->jour] = [
+                        'jour' => $row->jour,
+                        'nombre_wagons' => $wagonsParJour[$row->jour]->nombre_wagons ?? 0,
+                        'cadence_theorique' => $wagonsParJour[$row->jour]->cadence_theorique ?? 0,
+                        'nombre_wagons_Ballast' => $wagonsBallastParJour[$row->jour] ?? 0,
+                        'familles' => [],
+                        'total_poids' => round((float) ($poidsParJour[$row->jour] ?? 0), 2),
+                    ];
+                }
+                $data[$row->jour]['familles'][] = [
                     'id_famille' => $row->id_famille,
                     'nom_famille' => $row->nom_famille,
-                    'total' => (float) $row->total
+                    'total' => (float) $row->total,
+                    'total_poids' => (float) $row->total_poids
                 ];
             }
-
+            $data = array_values($data);
             return response()->json([
                 'success' => true,
                 'date_from' => $start->format('Y-m-d H:i:s'),

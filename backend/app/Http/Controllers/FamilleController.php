@@ -58,6 +58,7 @@ class FamilleController extends Controller
             'nom_famille' => 'required|string|max:50|unique:familles,nom_famille',
             'valeur_trieur' => 'required|numeric|min:0',
             'active' => 'sometimes|boolean',
+            'poids' => 'required|numeric|min:0|max:999999.99',
         ]);
 
         $famille = Famille::create($validated);
@@ -71,6 +72,7 @@ class FamilleController extends Controller
             'nom_famille' => 'required|string|max:50|unique:familles,nom_famille,' . $famille->id_famille . ',id_famille',
             'valeur_trieur' => 'required|numeric|min:0',
             'active' => 'sometimes|boolean',
+            'poids' => 'required|numeric|min:0|max:999999.99',
         ]);
 
         $famille->update($validated);

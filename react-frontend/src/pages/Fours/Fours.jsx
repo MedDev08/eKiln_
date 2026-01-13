@@ -94,7 +94,8 @@ const FoursManagement = () => {
     setTempCadence({
       cadence: four.cadence,
       duration: four.duree_cuisson,
-      formatted_duration: four.formatted_duration
+      formatted_duration: four.formatted_duration,
+      obj_density: four.obj_density
     });
   };
 
@@ -109,13 +110,20 @@ const FoursManagement = () => {
     if (!four) return;
 
     const newDuration = Math.round((newCadence * four.duree_cuisson) / four.cadence);
-    
+   
     setTempCadence({
       cadence: newCadence,
       duration: newDuration,
       formatted_duration: formatDuration(newDuration)
     });
   };
+  const handleDensityChange = (e) => {
+    const newObj_density = Number(e.target.value);
+    setTempCadence(prev => ({
+      ...prev,
+      obj_density: newObj_density
+    }));
+  }
 
   const saveChanges = async () => {
     try {
@@ -125,7 +133,9 @@ const FoursManagement = () => {
 
       await axios.patch(
         `http://localhost:8000/api/fours/${editingId}`,
-        { new_cadence: tempCadence.cadence },
+        { new_cadence: tempCadence.cadence,
+          newObj_density: tempCadence.obj_density
+         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -139,7 +149,8 @@ const FoursManagement = () => {
           ...four,
           cadence: tempCadence.cadence,
           duree_cuisson: tempCadence.duration,
-          formatted_duration: tempCadence.formatted_duration
+          formatted_duration: tempCadence.formatted_duration,
+          obj_density: tempCadence.obj_density
         } : four
       ));
 
@@ -215,6 +226,7 @@ const FoursManagement = () => {
                 <TableCell sx={{ fontWeight: 700, color: colors.primary[900] }}>Numéro</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: colors.primary[900] }}>Cadence (min)</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: colors.primary[900] }}>Durée de cuisson</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: colors.primary[900] }}>Density</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: colors.primary[900] }}>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -274,6 +286,20 @@ const FoursManagement = () => {
                     <Typography color={editingId === four.id_four ? colors.accent.amber : colors.primary[700]}>
                       {editingId === four.id_four ? tempCadence.formatted_duration : four.formatted_duration}
                     </Typography>
+                  </TableCell>
+
+                  <TableCell>
+                    {editingId === four.id_four ? (
+                      <TextField
+                        type="number"
+                        value={tempCadence.obj_density}
+                        onChange={handleDensityChange}
+                        inputProps={{ min: 1, max: 120 }}
+                        size="small"
+                      />
+                    ) : (
+                      <Typography>{four.obj_density}</Typography>
+                    )}
                   </TableCell>
 
                   <TableCell>

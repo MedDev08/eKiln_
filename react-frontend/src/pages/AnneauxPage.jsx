@@ -29,7 +29,7 @@ import {
 import SidebarChef from '../components/layout/SidebarChef';
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-
+import ScatterGraph from './ScatterGraph';
 const AnneauxPage = () => {
   const [anneauxNonTraites, setAnneauxNonTraites] = useState({});
   const [anneauxTraites, setAnneauxTraites] = useState({});
@@ -45,6 +45,9 @@ const AnneauxPage = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [anneauxExport, setAnneauxExport] = useState([]);
+  const [showChartModal, setShowChartModal] = useState(false);
+  const [fours, setFours] = useState([]);
   const [filters, setFilters] = useState({
     dateTo:'',
     dateFrom:'',
@@ -63,18 +66,19 @@ const AnneauxPage = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(
-        'http://localhost:8000/api/anneaux',
-        { 
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );     
+       const [response, foursRes ] = await Promise.all([
+             axios.get(
+                'http://localhost:8000/api/anneaux',
+                { 
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              ),
+              axios.get("http://localhost:8000/api/fours", {
+               headers: { Authorization: `Bearer ${token}` }
+               }),
+            ]);    
       setAnneauxNonTraites(response.data.anneauxParFour);
-      // Si aucun four sélectionné, prendre le premier disponible
-      if (!selectedFour) {
-        const fours = Object.keys(response.data.anneauxParFour);
-        if (fours.length > 0) setSelectedFour(fours[0]);
-      }
+      setFours(foursRes.data);
     } catch (error) {
       console.error(error);
       setAnneauxNonTraites({});
@@ -85,6 +89,13 @@ const AnneauxPage = () => {
    useEffect(() => {
         fetchAnneaux();
       }, []);
+
+  useEffect(() => {
+    if (!selectedFour && fours.length > 0) {
+      setSelectedFour(fours[0].num_four);
+    }
+  }, [fours]);
+
    const handleFilterChange = (field, value) => {
   setFilters((prev) => {
     let updated = { ...prev, [field]: value };
@@ -138,6 +149,7 @@ const AnneauxPage = () => {
         if (fours.length > 0) setSelectedFour(fours[0]);
       }
     setAnneauxTraites(response.data.data.data);
+    setAnneauxExport(response.data.Exporter);
     setTotal(response.data.total);
   } catch (error) {
     console.error(error);
@@ -228,6 +240,57 @@ const AnneauxPage = () => {
       setIsSubmitting(false);
     }
   };
+ const handleExportCSV = () => {
+  if (!anneauxExport || anneauxExport.length === 0) return;
+
+  const sep = ";";
+  let csv = `Date${sep}Anneau Gauche${sep}Anneau Droit\n`;
+
+  anneauxExport.forEach(a => {
+    const date = a.chargement?.datetime_sortieEstime
+      ? format(parseISO(a.chargement.datetime_sortieEstime), "dd/MM/yyyy", { locale: fr })
+      : "-";
+    csv += [date, a.gauche ?? "-", a.droit ?? "-"].join(sep) + "\n";
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `anneaux_four_${selectedFour}_${new Date().toLocaleDateString("fr-FR").replace(/\//g, "-")}.csv`;
+  link.click();
+  window.URL.revokeObjectURL(url);
+};
+const getShiftFromDate = (date) => {
+  const h = date.getHours();
+
+  if (h >= 6 && h < 14) return "P1";
+  if (h >= 14 && h < 22) return "P2";
+  return "P3";
+};
+
+const scatterDataFromAnneaux = anneauxExport
+  .map(a => {
+    const dateStr = a.chargement?.datetime_sortieEstime;
+    if (!dateStr) return null;
+    const date = new Date(dateStr.replace(' ', 'T'));
+    const day = date.toLocaleDateString("fr-FR");
+    const shift = getShiftFromDate(date);
+    return { 
+      x: `${day} ${shift}`,
+       sortDate: new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        shift === "P1" ? 6 : shift === "P2" ? 14 : 22
+      ).getTime(),                      
+      yGauche: Number(a.gauche) || 0,
+      yDroit: Number(a.droit) || 0,
+    };
+  })
+  .sort((a, b) => a.sortDate - b.sortDate); 
+// console.log('scatterDataFromAnneaux',scatterDataFromAnneaux);
+// console.log('selectedFour',selectedFour);
 const anneauxNonTraitesAFour = selectedFour ? anneauxNonTraites[selectedFour] || [] : [];
   if (!showHistorique && loading) {
   return (
@@ -263,33 +326,30 @@ const anneauxNonTraitesAFour = selectedFour ? anneauxNonTraites[selectedFour] ||
         {/* Sélection du four */}
        
        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-          {Object.keys(anneauxNonTraites).map(num_four => {
-            const isActive = selectedFour === num_four;
+       {fours.map((four) => {
+          const isActive = selectedFour === four.num_four;
 
-            return (
-              <Button
-                key={num_four}
-                variant={isActive ? "contained" : "outlined"}
-               onClick={() => {
-                  setSelectedFour(num_four);
-                  if (showHistorique) fetchHistorique(num_four);
-                }}
-                sx={{
-                  borderRadius: "8px 8px 0 0",
-                  backgroundColor: isActive ? "#3498db" : "transparent",
-                  color: isActive ? "#fff" : "inherit",
-                  "&:hover": {
-                    backgroundColor: isActive ? "#2980b9" : "rgba(0,0,0,0.08)",
-                  },
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                Four {num_four}
-              </Button>
-            );
-          })}
+          return (
+            <Button
+              key={four.num_four}
+              variant={isActive ? "contained" : "outlined"}
+              onClick={() => {
+                setSelectedFour(four.num_four);
+                if (showHistorique) fetchHistorique(four.num_four);
+              }}
+              sx={{
+                borderRadius: "8px 8px 0 0",
+                backgroundColor: isActive ? "#3498db" : "transparent",
+                color: isActive ? "#fff" : "inherit",
+                "&:hover": {
+                  backgroundColor: isActive ? "#2980b9" : "rgba(0,0,0,0.08)",
+                },
+              }}
+            >
+              Four {four.num_four}
+            </Button>
+          );
+        })}
         </Box>
         {successMessage && (
           <Alert severity="success" variant="filled" sx={{ mb: 2, borderRadius: 2 }}>
@@ -396,6 +456,16 @@ const anneauxNonTraitesAFour = selectedFour ? anneauxNonTraites[selectedFour] ||
                         />
                       </Grid>
                       <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button variant="contained" color="success" onClick={handleExportCSV} sx={{mr:2}}>
+                            Exporter CSV
+                          </Button>
+                        <Button
+                          variant="contained"
+                          onClick={() => setShowChartModal(true)}
+                          sx={{mr:2}}
+                        >
+                          Afficher le graphique
+                        </Button>
                         <Button
                           variant="outlined"
                           startIcon={<RefreshIcon />}
@@ -565,7 +635,7 @@ const anneauxNonTraitesAFour = selectedFour ? anneauxNonTraites[selectedFour] ||
             </>
           )}
         </Box>
-        {/* MODAL */}
+        [{/* MODAL */}]
         <Modal open={showModal} onClose={handleCloseModal}>
           <Box sx={{
             position: "absolute",
@@ -706,6 +776,46 @@ const anneauxNonTraitesAFour = selectedFour ? anneauxNonTraites[selectedFour] ||
               </Box>
               </>
             )}
+          </Box>
+        </Modal>
+        <Modal
+          open={showChartModal}
+          onClose={() => setShowChartModal(false)}
+        >
+          <Box sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 3,
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}
+          >
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="h6" fontWeight="bold">Graphique des anneaux</Typography>
+                <IconButton  onClick={() => setShowChartModal(false)}>
+                  <CloseIcon />
+                </IconButton>
+            </Box>
+             <Box
+              sx={{
+                flex: 1,
+                overflow: "auto",
+              }}
+            >
+            {scatterDataFromAnneaux.length > 0 ? (
+              <ScatterGraph 
+                data={scatterDataFromAnneaux}
+              />
+            ) : (
+              <Typography>Aucune donnée à afficher</Typography>
+            )}
+          </Box>
           </Box>
         </Modal>
     </SidebarChef>

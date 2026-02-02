@@ -317,7 +317,7 @@ useEffect(() => {
                     newFamilles[index] = { ...newFamilles[index], nom_famille: newInputValue };
                     setEditFormData({ ...editFormData, familles: newFamilles });
                   }}
-                  renderInput={(params) => <TextField {...params} label="Famille" size="small"  margin="normal"/>}
+                  renderInput={(params) => <TextField {...params} label="Famille" size="small" sx={{ mb: 1 }}/>}
                   // sx={{ width: '250px' }} // largeur fixe
                 />
               </Grid>
@@ -353,7 +353,7 @@ useEffect(() => {
                   }}
                   // sx={{ width: '50%' }} // largeur fixe
                   size="small"
-                  margin="normal"
+                   sx={{ mb: 1 }}
                 />
               </Grid>
 
@@ -412,14 +412,6 @@ useEffect(() => {
         </Box>
          {["admin","cuiseur"].includes(user?.role?.toLowerCase()) && location.pathname.toLowerCase().includes("/cuiseur") &&(
              <>
-              <Box display="flex" alignItems="center" mb={2} mt={2}>
-                <input
-                    type="checkbox"
-                    checked={anneauxCoche}
-                    onChange={(e) => setAnneauxCoche(e.target.checked)}
-                  />
-                  <Typography ml={1}><strong>Anneaux Bullers</strong></Typography>
-                </Box>
               <Typography sx={{ mb: 1 }}>Heure d’entrée :</Typography>
               <Grid container spacing={2} alignItems="center">
               <Grid item xs={4}>
@@ -454,8 +446,17 @@ useEffect(() => {
                 fullWidth
                 sx={{ mb: 2 }}
               />
+               </Grid>  
+               <Box display="flex" alignItems="center" mb={2} mt={2}>
+                <input
+                    type="checkbox"
+                    checked={anneauxCoche}
+                    onChange={(e) => setAnneauxCoche(e.target.checked)}
+                  />
+                  <Typography ml={1}><strong>Anneaux Bullers</strong></Typography>
+                </Box>
                </Grid>
-               </Grid>
+              
                </>
             )}
              <Grid container spacing={4} justifyContent="flex-end">

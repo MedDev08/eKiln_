@@ -39,15 +39,6 @@ class AnneauxBullersController extends Controller
             'total_count' => $anneaux->count(),
         ]);
     }
-    /*public function getHistoriqueFour3(Request $request)
-    {
-        return $this->getHistoriqueAnneauxParFour($request, 3);
-    }
-
-    public function getHistoriqueFour4(Request $request)
-    {
-        return $this->getHistoriqueAnneauxParFour($request, 4);
-    }*/
 
     public function getHistoriqueAnneauxParFour(Request $request, int $numFour)
     {
@@ -128,11 +119,18 @@ class AnneauxBullersController extends Controller
             $query->orderBy('chargements.datetime_sortieEstime', 'desc')
                 ->select('anneaux_bullers.*');
 
+            $Exporter = $query
+                ->when(!$request->dateFrom && !$request->dateTo, function ($q) {
+                    $q->whereYear('chargements.datetime_sortieEstime', now()->year)
+                        ->whereMonth('chargements.datetime_sortieEstime', now()->month);
+                })
+                ->get();
             $anneaux = $query->paginate($perPage, ['*'], 'page', $page);
 
             return response()->json([
                 'success' => true,
                 'data' => $anneaux,
+                'Exporter' => $Exporter,
                 'total' => $anneaux->total(),
                 'current_page' => $anneaux->currentPage(),
                 'per_page' => $anneaux->perPage(),

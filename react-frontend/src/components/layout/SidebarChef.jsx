@@ -8,7 +8,8 @@ import {
   History as HistoryIcon,
   Assignment as AssignmentIcon,
   LocalShipping as LocalShippingIcon,
-  LocalFireDepartment    as LocalFireDepartmentIcon    ,
+  LocalFireDepartment    as LocalFireDepartmentIcon,
+  TableChart as TableChartIcon,
 } from '@mui/icons-material';
 import { AppProvider } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
@@ -22,6 +23,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import Cookies from 'js-cookie';
 import DonutSmallIcon from '@mui/icons-material/DonutSmall';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
+import ChecklistIcon from '@mui/icons-material/Checklist';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 
 //  Thème global
 const appTheme = createTheme({
@@ -210,6 +214,18 @@ const NAVIGATION = [
     path: '/cuiseur' 
   },
   {
+    segment: 'controles',
+    title: 'Saisie des contrôles',
+    icon: <ChecklistIcon/>,
+    path: '/controles'
+  },
+  {
+   segment:'historique-controles',
+   title: 'Historique des Contrôles',
+   icon: <HistoryIcon /> ,
+   path:'/historique-controles'
+  },
+  {
     segment: 'WagonVisualization',
     title: 'Wagon Visualization',
     icon: <ViewModuleIcon />,
@@ -222,6 +238,12 @@ const NAVIGATION = [
       path: '/settings',
       children: [
         {
+          segment: 'controles',
+          title: 'Contrôles',
+          icon: <FactCheckIcon/>,
+          path: '/settings/controles' 
+        },
+        {
           segment: 'manage-users',
           title: 'Users',
           icon: <GroupsIcon />,
@@ -232,6 +254,12 @@ const NAVIGATION = [
           title: 'Fours',
           icon: <DescriptionIcon />,
           path: '/settings/fours'
+        },
+        {
+          segment: 'propriete_graphe',
+          title: 'Propriétés Graphe',
+          icon: <ShowChartIcon />, 
+          path: '/settings/propriete_graphe'
         },
         {
           segment: 'wagons',
@@ -260,6 +288,12 @@ const NAVIGATION = [
       icon: <LocalShippingIcon />,
       path: '/ChargementContent'
     },
+    {
+    segment: 'tableau_chargements',
+    title: 'Détails des chargements',
+    icon: <TableChartIcon />, 
+    path: '/tableau_chargements'
+   },
     {
     segment: 'anneaux',
     title: 'Anneaux Bullers',
@@ -411,6 +445,12 @@ const NAV_Cuiseur= [
     icon: <DonutSmallIcon/>, 
     path: '/anneaux'
   },
+  {
+    segment: 'controles',
+    title: 'Saisie des contrôles',
+    icon: <ChecklistIcon/>,
+    path: '/controles'
+  },
    {
       segment: 'recherche ',
       title: 'Recherche',
@@ -474,6 +514,12 @@ const NAV_Manager= [
     path: '/settings',
     children: [
       {
+          segment: 'controles',
+          title: 'Contrôles',
+          icon: <FactCheckIcon/>,
+          path: '/settings/controles' 
+       },
+      {
         segment: 'manage-users',
         title: 'Users',
         icon: <GroupsIcon />,
@@ -484,6 +530,12 @@ const NAV_Manager= [
         title: 'Fours',
         icon: <DescriptionIcon />,
         path: '/settings/fours'
+      },
+      {
+        segment: 'propriete-graphe',
+        title: 'Propriétés Graphe',
+        icon: <ShowChartIcon />, 
+        path: '/settings/propriete_graphe'
       },
       {
         segment: 'wagons',

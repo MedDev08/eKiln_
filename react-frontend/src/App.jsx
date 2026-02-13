@@ -36,6 +36,15 @@ import TypeWagonAdd from './pages/Wagons/TypeWagonAdd';
 import ArchiveChargements from './pages/Chargement/ArchiveChargements';
 import AuditLogs from './pages/AuditLogs';
 import AnneauxPage from './pages/AnneauxPage';
+import TableauChargements from './pages/Chargement/TableauChargements ';
+import Controles from './pages/Controles/Controles';
+import ControleAdd from './pages/Controles/ControleAdd';
+import ControleEdit from './pages/Controles/ControleEdit';
+import SaisieControles from './pages/Controles/SaisieControles';
+import HistoriqueControles from './pages/Controles/HistoriqueControles';
+import ProprieteGraphe from "./pages/ProprieteGraphe/ProprieteGraphe";
+import ProprieteGrapheAdd from './pages/Proprietegraphe/ProprietegrapheAdd';
+import ProprieteGrapheEdit from './pages/Proprietegraphe/ProprietegrapheEdit';
 function App() {
   return (
     <AuthProvider>
@@ -75,6 +84,15 @@ function App() {
         <Route path="/archives-chargements" element={<ArchiveChargements />} />
         <Route path='/auditlogs' element={<AuditLogs/>}/>
         <Route path='/anneaux' element={<AnneauxPage/>}/>
+        <Route path='/tableau_chargements' element={<TableauChargements/>}/>
+        <Route path='/settings/controles' element={<Controles/>}/>
+        <Route path='/settings/controles/add' element={<ControleAdd/>}/>
+        <Route path='/settings/controles/edit/:id'element={<ControleEdit/>}/>
+        <Route path="/controles" element={<SaisieControles />} />
+        <Route path='/historique-controles' element={<HistoriqueControles/>}/>
+        <Route path="/settings/propriete_graphe" element={<ProprieteGraphe />} />
+        <Route path="/settings/propriete_graphe/add" element={<ProprieteGrapheAdd />} />
+        <Route path="/settings/propriete_graphe/edit/:id" element={<ProprieteGrapheEdit />} />
       </Routes>
     </AuthProvider>
   );

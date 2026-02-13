@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AnneauxBullersController;
+use App\Http\Controllers\ControleController;
+use App\Http\Controllers\DetailControleController;
+use App\Http\Controllers\ProprieteGrapheController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('/me', function () {
@@ -176,3 +179,25 @@ Route::get('/all-chargement-ids', [AnneauxBullersController::class, 'getAllCharg
 Route::get('/historique-anneaux/{numFour}', [AnneauxBullersController::class, 'getHistoriqueAnneauxParFour']);
 Route::post('/chargements/{id}/typeWagon', [ChargementController::class, 'updateTypeWagon']);
 Route::get('/chargements/{numFour}', [ChargementController::class, 'getChargements']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/controles', [ControleController::class, 'index']);
+    Route::get('/controles/{controle}', [ControleController::class, 'show']);
+    Route::post('/controles', [ControleController::class, 'store']);
+    Route::put('/controles/{controle}', [ControleController::class, 'update']);
+    Route::delete('/controles/{controle}', [ControleController::class, 'destroy']);
+});
+Route::middleware('auth:sanctum')->get('/controles-a-faire', [ControleController::class, 'controlesAFaire']);
+Route::middleware('auth:sanctum')->post('/detail-controles', [DetailControleController::class, 'store']);
+Route::get('historique-controles', [DetailControleController::class, 'index']);
+Route::delete('historique-controles/{id}', [DetailControleController::class, 'destroy']);
+Route::put('historique-controles/{id}', [DetailControleController::class, 'update']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/propriete-graphe', [ProprieteGrapheController::class, 'index']);
+    Route::get('/propriete-graphe/{id}', [ProprieteGrapheController::class, 'show']);
+    Route::post('/propriete-graphe', [ProprieteGrapheController::class, 'store']);
+    Route::put('/propriete-graphe/{id}', [ProprieteGrapheController::class, 'update']);
+    Route::delete('/propriete-graphe/{id}', [ProprieteGrapheController::class, 'destroy']);
+});
+Route::get('/propriete-graphe/four/{numFour}', [ProprieteGrapheController::class, 'getZonesByFour']);
+Route::get('/controles/by-four/{idFour}', [ControleController::class, 'getByFour']);
+Route::get('/trois-dernières-remarques/{id_four}', [DetailControleController::class, 'troisDernieresRemarques']);

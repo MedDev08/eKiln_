@@ -811,6 +811,7 @@ const anneauxNonTraitesAFour = selectedFour ? anneauxNonTraites[selectedFour] ||
             {scatterDataFromAnneaux.length > 0 ? (
               <ScatterGraph 
                 data={scatterDataFromAnneaux}
+                selectedFour={selectedFour}
               />
             ) : (
               <Typography>Aucune donnée à afficher</Typography>

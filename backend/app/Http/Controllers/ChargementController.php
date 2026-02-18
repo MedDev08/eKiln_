@@ -1750,6 +1750,11 @@ class ChargementController extends Controller
                                     THEN DATE(c.date_entrer)
                                     ELSE DATE_SUB(DATE(c.date_entrer), INTERVAL 1 DAY)
                                 END";
+            $dateExpressionControle = "CASE
+                                    WHEN TIME(dc.created_at) >= '06:00:00'
+                                    THEN DATE(dc.created_at)
+                                    ELSE DATE_SUB(DATE(dc.created_at), INTERVAL 1 DAY)
+                                END";
             $baseDetailQuery = function () use ($numFour, $start, $end) {
                 return DB::table('detail_chargements as dc')
                     ->join('chargements as c', 'c.id', '=', 'dc.id_chargement')
@@ -1796,10 +1801,44 @@ class ChargementController extends Controller
                 ")
                 ->groupBy('jour')
                 ->pluck('total_poids', 'jour');
+            $controlesParJour = DB::table('details_controles as dc')
+                ->join('controle_four as cf', 'cf.id', '=', 'dc.id_controle_four')
+                ->join('controles as ct', 'ct.id', '=', 'cf.id_controle')
+                ->join('fours as fo', 'fo.id_four', '=', 'cf.id_four')
+                ->where('fo.num_four', $numFour)
+                ->whereBetween('dc.created_at', [$start, $end])
+
+                ->whereRaw("TIME(dc.created_at) >= '06:00:00'")
+                ->whereRaw("TIME(dc.created_at) < '14:00:00'")
+
+                ->whereIn('ct.id', [7, 8, 9])
+
+                ->selectRaw("
+                        $dateExpressionControle as jour,
+                        ct.id,
+                        MAX(dc.valeur) as valeur
+                    ")
+                ->groupBy('jour', 'ct.id')
+                ->get()
+                ->groupBy('jour');
 
             $data = [];
             foreach ($rows as $row) {
                 if (!isset($data[$row->jour])) {
+                    $controles = [
+                        'Compteur_Propane' => null,
+                        'Relevee_pression' => null,
+                        'Relevee_temperature' => null,
+                    ];
+
+                    if (isset($controlesParJour[$row->jour])) {
+                        foreach ($controlesParJour[$row->jour] as $c) {
+
+                            if ($c->id == 7) $controles['Compteur_Propane'] = (float) $c->valeur;
+                            if ($c->id == 8) $controles['Relevee_pression'] = (float) $c->valeur;
+                            if ($c->id == 9) $controles['Relevee_temperature'] = (float) $c->valeur;
+                        }
+                    }
                     $data[$row->jour] = [
                         'jour' => $row->jour,
                         'nombre_wagons' => $wagonsParJour[$row->jour]->nombre_wagons ?? 0,
@@ -1807,6 +1846,7 @@ class ChargementController extends Controller
                         'nombre_wagons_Ballast' => $wagonsBallastParJour[$row->jour] ?? 0,
                         'familles' => [],
                         'total_poids' => round((float) ($poidsParJour[$row->jour] ?? 0), 2),
+                        'controles' => $controles,
                     ];
                 }
                 $data[$row->jour]['familles'][] = [
@@ -1817,6 +1857,36 @@ class ChargementController extends Controller
                 ];
             }
             $data = array_values($data);
+            usort($data, fn($a, $b) => strcmp($a['jour'], $b['jour']));
+
+            for ($i = 0; $i < count($data); $i++) {
+
+                $currentIndex = $data[$i]['controles']['Compteur_Propane'] ?? 0;
+
+                $nextIndex = ($i + 1 < count($data))
+                    ? ($data[$i + 1]['controles']['Compteur_Propane'] ?? 0)
+                    : 0;
+
+                $conso = $nextIndex != 0 ? $nextIndex - $currentIndex : 0;
+                $data[$i]['conso'] = round($conso, 2);
+                $temperature = $data[$i]['controles']['Relevee_temperature'] ?? 0;
+                $pression    = $data[$i]['controles']['Relevee_pression'] ?? 1013;
+                $facteurCorrection = (273 / (273 + $temperature)) * ((1013 + $pression) / 1013);
+                $data[$i]['coef'] = round($facteurCorrection, 2);
+                $coef = $data[$i]['coef'];
+                $conso = $data[$i]['conso'];
+                $consom = $coef * $conso * 2.011;
+                $data[$i]['consom'] = round($consom, 2);
+                $consom = $data[$i]['consom'];
+                $total_poids = $data[$i]['total_poids'];
+                $conso_eff = $total_poids > 0 ? ($consom * 12.85) / $total_poids : 0;
+                $data[$i]['conso_eff'] = round($conso_eff, 2);
+                $cadence_theorique =  $data[$i]['cadence_theorique'];
+                $radio = $cadence_theorique > 0 ?  $total_poids / ($cadence_theorique * 660) : 0;
+                $data[$i]['ratio'] = round($radio, 2);
+                $temps_cycle = $cadence_theorique > 0 ? (1440 / $cadence_theorique) * 58 / 60 : 0;
+                $data[$i]['temps_cycle'] = round($temps_cycle, 2);
+            }
             return response()->json([
                 'success' => true,
                 'date_from' => $start->format('Y-m-d H:i:s'),

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AnneauxBullersController extends Controller
 {
-    //Récupérer tous les anneaux 
+    //Récupérer tous les anneaux
     public function getAnneaux(Request $request)
     {
         $anneaux = AnneauxBullers::with([
@@ -119,18 +119,18 @@ class AnneauxBullersController extends Controller
             $query->orderBy('chargements.datetime_sortieEstime', 'desc')
                 ->select('anneaux_bullers.*');
 
-            $Exporter = $query
+            $Exporter = $query->where('gauche', '!=', 0)->where('droit', '!=', 0)
                 ->when(!$request->dateFrom && !$request->dateTo, function ($q) {
                     $q->whereYear('chargements.datetime_sortieEstime', now()->year)
                         ->whereMonth('chargements.datetime_sortieEstime', now()->month);
-                })
-                ->get();
+                })->get();
+
             $anneaux = $query->paginate($perPage, ['*'], 'page', $page);
 
             return response()->json([
                 'success' => true,
                 'data' => $anneaux,
-                'Exporter' => $Exporter,
+                'exporter' => $Exporter,
                 'total' => $anneaux->total(),
                 'current_page' => $anneaux->currentPage(),
                 'per_page' => $anneaux->perPage(),
@@ -144,7 +144,6 @@ class AnneauxBullersController extends Controller
             ], 500);
         }
     }
-
     //Sauvegarder les mesures gauche/droit pour un chargement donné
     public function saveMeasures(Request $request, $id_chargement)
     {

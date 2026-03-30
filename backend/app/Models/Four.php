@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\BaseAuditableModel;
 
-class Four extends Model
+class Four extends BaseAuditableModel
 {
     protected $primaryKey = 'id_four';
-    protected $fillable = ['num_four', 'duree_cuisson', 'cadence'];
+    protected $fillable = ['num_four', 'duree_cuisson', 'cadence', 'obj_density'];
 
 
 
@@ -21,7 +22,7 @@ class Four extends Model
         return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
     }
 
-    public static function updateCadence($id_four, $new_cadence)
+    public static function updateCadence($id_four, $new_cadence, $newObj_density)
     {
         $four = self::findOrFail($id_four);
         $ancienne_cadence = $four->cadence;
@@ -33,7 +34,8 @@ class Four extends Model
         // Mettre à jour
         $four->update([
             'cadence' => $new_cadence,
-            'duree_cuisson' => (int) round($nouvelle_duree) // Stocker en secondes
+            'duree_cuisson' => (int) round($nouvelle_duree), // Stocker en secondes
+            'obj_density' => $newObj_density
         ]);
 
         return $four;

@@ -48,6 +48,9 @@ export default function HistoriqueControles() {
   const [editValue, setEditValue] = useState("");
   const [frequences, setFrequences] = useState([]);
   const [controles, setControles] = useState([]);
+  const [isLoadingFours, setIsLoadingFours] = useState(true);
+  const [loadingSubmit, setLoadingSubmit] =useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const now = new Date();
   const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const [filters, setFilters] = useState({
@@ -61,11 +64,18 @@ export default function HistoriqueControles() {
 
     useEffect(() => {
       const fetchFours = async () => {
+        try{
+         setIsLoadingFours(true);
         const token = localStorage.getItem('token');
         const res = await axios.get('http://localhost:8000/api/fours', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setFours(res.data);
+        } catch (error) {
+        console.error(error);
+        } finally {
+            setIsLoadingFours(false);
+        }
       };
 
       fetchFours();
@@ -91,10 +101,12 @@ export default function HistoriqueControles() {
     useEffect(() => {
         if (fours.length && !selectedFour) {
           setSelectedFour(fours[0].id_four);
+          fetchData(fours[0].id_four);
         }
     }, [fours]);
 
-    const fetchData = async () => {
+    const fetchData = async (selectedFour) => {
+      if(!selectedFour) return;
       try {
         setLoading(true);
         setError(null);
@@ -136,6 +148,7 @@ export default function HistoriqueControles() {
 
     const confirmDelete = async () => {
       try {
+        setIsDeleting(true);
         const token = localStorage.getItem('token');
 
        const res= await axios.delete(
@@ -154,10 +167,13 @@ export default function HistoriqueControles() {
         setTimeout(() => setSuccessMessage(""), 3000);
       } catch (err) {
         console.error(err);
+      } finally {
+        setIsDeleting(false); 
       }
     };
     const confirmEdit = async () => {
       try {
+         setLoadingSubmit(true);
         const token = localStorage.getItem("token");
 
         const res = await axios.put(
@@ -178,6 +194,8 @@ export default function HistoriqueControles() {
         setTimeout(() => setSuccessMessage(""), 3000);
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoadingSubmit(false);
       }
     };
 
@@ -201,6 +219,18 @@ export default function HistoriqueControles() {
       // format YYYY-MM-DD
       return date.toISOString().split('T')[0];
     };
+    
+  if (isLoadingFours) {
+    return (
+      <SidebarChef>
+        <Box sx={{ textAlign: "center", mt: 6 }}>
+          <CircularProgress size={60} />
+          <Typography sx={{ mt: 2 }}>Chargement...</Typography>
+        </Box>
+      </SidebarChef>
+    );
+  }
+
   return (
     <SidebarChef>
       <Box m={4}>
@@ -334,7 +364,7 @@ export default function HistoriqueControles() {
               <Button
                 variant="outlined"
                 // startIcon={<RefreshIcon />}
-                onClick={fetchData}
+                onClick={() => fetchData(selectedFour)}
               >
                 Filtrer
               </Button>
@@ -518,8 +548,16 @@ export default function HistoriqueControles() {
               </Button>
               </Grid>
               <Grid item>
-                <Button variant="contained" onClick={confirmEdit}>
-                Enregistrer
+                <Button
+                 variant="contained"
+                 onClick={confirmEdit}
+                 disabled={loadingSubmit}
+                 >
+               {loadingSubmit ? (
+                  <CircularProgress size={24} />
+                ):(
+                  "Enregistrer"
+                )}
                 </Button>
                 </Grid>
               </Grid>
@@ -579,9 +617,14 @@ export default function HistoriqueControles() {
                 variant="contained"
                 color="error"
                 onClick={confirmDelete}
+                disabled={isDeleting}
                 sx={{ width: "45%" }}
-              >
-                Supprimer
+                 >
+                {isDeleting ? (
+                  <CircularProgress size={22} color="inherit" />
+                ) : (
+                  "Supprimer"
+                )}
               </Button>
             </Box>
           </Box>

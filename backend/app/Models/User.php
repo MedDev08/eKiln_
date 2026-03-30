@@ -12,7 +12,7 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
     // Dans User.php
-protected $table = 'users'; // si votre table s'appelle 'users'
+    protected $table = 'users'; // si votre table s'appelle 'users'
     protected $primaryKey = 'id_user';
 
     protected $fillable = [
@@ -21,6 +21,7 @@ protected $table = 'users'; // si votre table s'appelle 'users'
         'prenom',
         'password',
         'role',
+        'id_service'
     ];
 
     protected $hidden = [
@@ -33,9 +34,12 @@ protected $table = 'users'; // si votre table s'appelle 'users'
         return $this->role === 'admin';
     }
     public function polyvalences()
-{
-    return $this->hasMany(Polyvalence::class, 'id_user', 'id_user')
-                ->select('id_polyvalence', 'id_user', 'id_famille');
-}
-
+    {
+        return $this->hasMany(Polyvalence::class, 'id_user', 'id_user')
+            ->select('id_polyvalence', 'id_user', 'id_famille');
+    }
+    public function service()
+    {
+        return $this->belongsTo(Service::class, 'id_service');
+    }
 }

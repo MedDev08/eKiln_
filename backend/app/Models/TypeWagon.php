@@ -3,8 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\BaseAuditableModel;
 
-class TypeWagon extends Model
+class TypeWagon extends BaseAuditableModel
 {
     protected $table = 'type_wagon';
 

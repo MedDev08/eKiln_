@@ -36,7 +36,7 @@ import TypeWagonAdd from './pages/Wagons/TypeWagonAdd';
 import ArchiveChargements from './pages/Chargement/ArchiveChargements';
 import AuditLogs from './pages/AuditLogs';
 import AnneauxPage from './pages/AnneauxPage';
-import TableauChargements from './pages/Chargement/TableauChargements ';
+import TableauChargements from './pages/Chargement/TableauChargements';
 import Controles from './pages/Controles/Controles';
 import ControleAdd from './pages/Controles/ControleAdd';
 import ControleEdit from './pages/Controles/ControleEdit';
@@ -45,6 +45,13 @@ import HistoriqueControles from './pages/Controles/HistoriqueControles';
 import ProprieteGraphe from "./pages/ProprieteGraphe/ProprieteGraphe";
 import ProprieteGrapheAdd from './pages/Proprietegraphe/ProprietegrapheAdd';
 import ProprieteGrapheEdit from './pages/Proprietegraphe/ProprietegrapheEdit';
+import Services from './pages/Services/Services';
+import ServiceAdd from './pages/Services/ServiceAdd';
+import ServiceEdit from './pages/Services/ServiceEdit';
+import Essais from './pages/Essais/Essais';
+import EssaiEdit from './pages/Essais/EssaiEdit';
+import EssaiAdd from './pages/Essais/EssaiAdd';
+import HistoriqueEssais from './pages/Essais/HistoriqueEssais';
 function App() {
   return (
     <AuthProvider>
@@ -88,11 +95,18 @@ function App() {
         <Route path='/settings/controles' element={<Controles/>}/>
         <Route path='/settings/controles/add' element={<ControleAdd/>}/>
         <Route path='/settings/controles/edit/:id'element={<ControleEdit/>}/>
-        <Route path="/controles" element={<SaisieControles />} />
-        <Route path='/historique-controles' element={<HistoriqueControles/>}/>
+        <Route path="/controles/saisie" element={<SaisieControles />} />
+        <Route path='/controles/historique' element={<HistoriqueControles/>}/>
         <Route path="/settings/propriete_graphe" element={<ProprieteGraphe />} />
         <Route path="/settings/propriete_graphe/add" element={<ProprieteGrapheAdd />} />
         <Route path="/settings/propriete_graphe/edit/:id" element={<ProprieteGrapheEdit />} />
+        <Route path="/settings/services" element={<Services/>}/>
+        <Route path="/settings/services/add" element={<ServiceAdd/>}/>
+        <Route path="/settings/services/edit/:id" element={<ServiceEdit/>}/>
+        <Route path="/settings/essais" element={<Essais/>}/>
+        <Route path='/settings/essais/add' element={<EssaiAdd/>}/>
+        <Route path="/settings/essais/edit/:id" element={<EssaiEdit/>}/>
+        <Route path="/historique-essais" element={<HistoriqueEssais />} />
       </Routes>
     </AuthProvider>
   );

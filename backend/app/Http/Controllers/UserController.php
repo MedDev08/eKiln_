@@ -14,13 +14,14 @@ class UserController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => User::all()->map(function ($user) {
+            'data' => User::with('service')->get()->map(function ($user) {
                 return [
                     'id' => $user->id_user,
                     'Matricule' => $user->matricule,
                     'Nom' => $user->nom,
                     'Prenom' => $user->prenom,
                     'Role' => $user->role,
+                    'Service' => $user->service?->nom_service,
                     'is_active' => $user->is_active
                 ];
             })
@@ -34,7 +35,8 @@ class UserController extends Controller
             'nom' => 'required',
             'prenom' => 'required',
             'role' => 'required|in:admin,chef d\'equipe,enfourneur,trieur,jeune four,manager,cuiseur',
-            'password' => 'nullable|string|min:4'
+            'password' => 'nullable|string|min:4',
+            'id_service' => 'nullable|exists:services,id'
         ]);
 
         $user = new User($validated);
@@ -49,7 +51,7 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        $user->update($request->only(['nom', 'prenom', 'role', 'matricule']));
+        $user->update($request->only(['nom', 'prenom', 'role', 'matricule', 'id_service']));
 
         if ($request->has('password') && $request->password) {
             $user->password = Hash::make($request->password);
@@ -128,26 +130,10 @@ class UserController extends Controller
 
         return response()->json(['count' => $count]);
     }
-    //public function index1()
-    //{
-    //  return response()->json([
-    //    'success' => true,
-    //  'data' => User::all()->map(function($user) {
-    //    return [
-    //      'id' => $user->id_user,
-    //    'Matricule' => $user->matricule,
-    //  'Nom' => $user->nom,
-    //'Prenom' => $user->prenom,
-    //'Role' => $user->role,
-    //'is_active' => $user->is_active
-    //];
-    //})
-    //]);
-    //}
 
     public function show($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with('service')->findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -155,19 +141,10 @@ class UserController extends Controller
                 'Matricule' => $user->matricule,
                 'Nom' => $user->nom,
                 'Prenom' => $user->prenom,
-                'Role' => $user->role
+                'Role' => $user->role,
+                'id_service' => $user->id_service,
+                'Service' => $user->service?->nom_service,
             ]
         ]);
     }
-    // public function getActiveJeunesFour()
-    // {
-    //     $jeunesFour = User::where('role', 'jeune four')
-    //         ->orderBy('created_at', 'desc')
-    //         ->get(['id_user', 'matricule', 'nom', 'prenom', 'is_active']);
-
-    //     return response()->json($jeunesFour);
-    // }
-
-    // Les autres méthodes (store, update, destroy) peuvent rester telles quelles
-
 }

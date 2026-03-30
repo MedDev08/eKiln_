@@ -37,15 +37,34 @@ export default function ManageUsersAdd() {
     Nom: '',
     Prenom: '',
     Role: '',
-    Password: ''
+    Password: '',
+    id_service: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [familles, setFamilles] = useState([]);
   const [selectedFamilles, setSelectedFamilles] = useState([]);
+  const [services, setServices] = useState([]);
   const token = localStorage.getItem('token');
 
+ useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const res = await axios.get(
+          'http://localhost:8000/api/services',
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setServices(res.data);
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchServices();
+  }, []);
   useEffect(() => {
     const fetchFamilles = async () => {
       try {
@@ -78,7 +97,8 @@ export default function ManageUsersAdd() {
         nom: formData.Nom,
         prenom: formData.Prenom,
         role: formData.Role,
-        password: formData.Password
+        password: formData.Password,
+        id_service: formData.id_service 
       };
 
       const response = await axios.post('http://localhost:8000/api/users', userData, {
@@ -106,7 +126,8 @@ export default function ManageUsersAdd() {
         Nom: '',
         Prenom: '',
         Role: '',
-        Password: ''
+        Password: '',
+        id_service:'',
       });
       setSelectedFamilles([]);
       setSuccess(true);
@@ -196,6 +217,22 @@ export default function ManageUsersAdd() {
           </Select>
         </FormControl>
 
+         <TextField
+            select
+            fullWidth
+            margin="normal"
+            label="Service"
+            name="id_service"
+            value={formData.id_service}
+            onChange={handleChange}
+            required
+            >
+            {services.map(service => (
+                <MenuItem key={service.id} value={service.id}>
+                {service.nom_service}
+                </MenuItem>
+            ))}
+          </TextField>
         {formData.Role !== 'trieur' && (
           <TextField
             fullWidth

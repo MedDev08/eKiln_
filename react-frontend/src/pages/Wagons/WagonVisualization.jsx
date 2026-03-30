@@ -7,6 +7,13 @@ import {
     Typography,
     Modal,
     Backdrop,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
     Fade,
     Button,
     LinearProgress,
@@ -15,6 +22,8 @@ import {
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { styled } from '@mui/system';
 import FlagIcon from '@mui/icons-material/Flag';
+import { Circle } from '@mui/icons-material'; 
+import CircularProgress from '@mui/material/CircularProgress';
 
 const Header = ({ title, subtitle }) => (
     <Box mb="30px">
@@ -88,35 +97,70 @@ const WagonVisualization = () => {
     const [details, setDetails] = useState([]);
     const [footerData, setFooterData] = useState(null);
     const [openModal, setOpenModal] = useState(false);
-    const [now, setNow] = useState(new Date());
-    const [anneaux, setAnneaux] = useState([]);
+    const [now, _setNow] = useState(new Date());
     const [anneauxCoche, setAnneauxCoche] = useState(false);
-    const [ballastWagons, setBallastWagons] = useState([]);
+    const [selectedEssais, setSelectedEssais] = useState([]);
+    const [allEssais, setAllEssais] = useState([]);
+    const [serviceSansEssaiIds, setServiceSansEssaiIds] = useState([]);
+    const [isUpdatingAnneaux, setIsUpdatingAnneaux] = useState(false);
+    const [isSavingEssais, setIsSavingEssais] = useState(false);
+    
+    const fetchServicesSansEssais = async () => {
+        try {
+            const token = localStorage.getItem('token');
+
+            const res = await axios.get(
+                'http://localhost:8000/api/services-sans-essais',
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+             const servicesData = res.data.data || [];
+
+        setServiceSansEssaiIds(servicesData.map(s => s.id));
 
 
-   
-    const fetchAnneaux = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:8000/api/all-chargement-ids", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setAnneaux(res.data.ids); // stocke tous les IDs de chargement
-        console.log("id_chargemet",res.data.ids);
-      } catch (err) {
-        console.error(err);
-      }
+        } catch (err) {
+            console.error(err);
+        }
     };
-    // Mettre à jour l'heure courante chaque minute pour les animations
+
     useEffect(() => {
-        fetchAnneaux();
-        const timer = setInterval(() => {
-            setNow(new Date());
-            fetchAnneaux();
-        }, 60000); // Mise à jour chaque minute
-        return () => clearInterval(timer);
+        fetchServicesSansEssais(); 
     }, []);
 
+    const fetchEssais = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get('http://localhost:8000/api/essais', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAllEssais(res.data.data || []);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+    const saveEssais = async () => {
+        try {
+            setIsSavingEssais(true);
+            const token = localStorage.getItem('token');
+            await axios.post(
+            'http://localhost:8000/api/details-essais',
+            {
+                chargement_id: selectedChargement,
+                essais_ids: selectedEssais
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+            );
+            handleCloseModal();
+            handleRefresh(); 
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsSavingEssais(false);
+        }
+        };
     // Charger les données depuis le localStorage ou l'API
     useEffect(() => {
         const loadFromLocalStorage = () => {
@@ -187,6 +231,7 @@ const WagonVisualization = () => {
     if (!selectedChargement) return; 
 
     try {
+        setIsUpdatingAnneaux(true);
         const token = localStorage.getItem("token");
         await fetch(
             `http://localhost:8000/api/chargements/${selectedChargement}/anneaux`,
@@ -200,21 +245,12 @@ const WagonVisualization = () => {
             }
         );
 
-        // Mettre à jour le state local pour refléter le changement
-        if (anneauxCoche) {
-            setAnneaux(prev => [...prev, selectedChargement]);
-        } else {
-            setAnneaux(prev => prev.filter(id => id !== selectedChargement));
-        }
-
     } catch (error) {
         console.error("Erreur lors de la mise à jour des anneaux :", error);
-        // Revenir à l’état précédent si erreur
-        setAnneauxCoche(prev => !prev);
+    } finally {
+        setIsUpdatingAnneaux(false);
     }
 };
-
-
     const handleBoxClick = async (chargement) => {
         try {
             const token = localStorage.getItem('token');
@@ -231,8 +267,10 @@ const WagonVisualization = () => {
                 debut: new Date(response.data.debut_cuisson).toLocaleString(),
                 fin: new Date(response.data.FinCuissonEstimee).toLocaleString()
             });
+            setSelectedEssais(response.data.essais.map(e => e.id));
             setSelectedChargement(chargement.id_chargement);
-            setAnneauxCoche(anneaux.includes(chargement.id_chargement));
+            setAnneauxCoche(response.data.anneaux);
+            console.log(response.data.anneaux);
             setOpenModal(true);
         } catch (error) {
             console.error('Details Error:', error);
@@ -249,7 +287,6 @@ const WagonVisualization = () => {
         localStorage.removeItem('wagonVisualizationData');
         setFourData(prev => ({ ...prev, loading: true }));
         fetchChargements();
-        fetchAnneaux();
     };
     const user = JSON.parse(localStorage.getItem('user'));
     const role = user?.role?.toLowerCase();
@@ -304,7 +341,10 @@ const WagonVisualization = () => {
                             <WagonPosition 
                                 progress={progress} 
                                 type_wagon={chargement.color}
-                                onClick={() => handleBoxClick(chargement)}
+                                onClick={async () => {
+                                     handleBoxClick(chargement);
+                                     fetchEssais();
+                                }}
                             >     
                                 <div style={{ fontSize: '12px', fontWeight: 'bold' }}>
                                     {chargement.num_wag}
@@ -317,39 +357,78 @@ const WagonVisualization = () => {
                                     // transform: 'translateX(-50%)'
                                 }}>
                                     {timeLeft}
-                                </div>                      
-                                {/* Cercle doré en bas à droite si l'id est dans anneaux */}
-                                {anneaux.includes(chargement.id_chargement) && (
+                                </div>  
+                               {(chargement.anneaux || chargement.essais?.length > 0 ) && (
                                     <div style={{
                                         position: 'absolute',
                                         bottom: '55px',
-                                        right: '2px',
-                                        width: '12px',
-                                        height: '12px',
+                                        right: '4px',
+                                        width: 8,
+                                        height: 8,
                                         borderRadius: '50%',
                                         backgroundColor: 'gold',
                                         border: '1px solid #000000',
                                     }} />
-                                )}
-                                {chargement.has_famille_37 && (
-                                    //  <FlagIcon fontSize="small" color ='error' 
-                                    //   sx={{
-                                    //         position: 'absolute',
-                                    //         bottom: '0.5px',
-                                    //         left: '85%',
-                                    //         transform: 'translateX(-50%)',
-                                    //     }} />
+                                )}                  
+                                {/* Cercle doré en bas à droite si l'id est dans anneaux */}
+                                {/* {chargement.anneaux && (
                                     <div style={{
                                         position: 'absolute',
-                                        bottom: '0px',
-                                        right: '1px',
-                                        width: '12px',
-                                        height: '12px',
+                                        bottom: '55px',
+                                        right: '4px',
+                                        width: 8,
+                                        height: 8,
+                                        borderRadius: '50%',
+                                        backgroundColor: 'gold',
+                                        border: '1px solid #000000',
+                                    }} />
+                                )} */}
+                               
+                                {chargement.has_famille_37 && (
+                                    <div style={{
+                                        position: 'absolute',
+                                       bottom: "4px",
+                                       right: "4px",
+                                        width: 8,
+                                        height: 8,
                                         borderRadius: '50%',
                                         backgroundColor: 'red',
                                         border: '1px solid #000000',
                                     }} />
                                 )}
+                               {/* {chargement.essais?.length > 0 && (
+                                    <Box
+                                        sx={{
+                                        position: "absolute",
+                                        // top: "4px",
+                                        bottom: '35px',
+                                        right: "4px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        gap: "2px",
+                                        }}
+                                    >
+                                        {Array.from(
+                                        new Map(
+                                            chargement.essais
+                                            ?.filter((e) => e.essai?.service)
+                                            .map((e) => [e.essai.service.id, e.essai.service])
+                                        ).values()
+                                        ).map((service) => (
+                                        <Box
+                                            key={service.id}
+                                            sx={{
+                                            width: 8,
+                                            height: 8,
+                                            borderRadius: "50%",
+                                            backgroundColor: service.color || "#999",
+                                            border: '1px solid #000000',
+                                            }}
+                                        />
+                                        ))}
+                                    </Box>
+                                    )} */}
                             </WagonPosition>
                         </Tooltip>
                     );
@@ -410,37 +489,44 @@ const WagonVisualization = () => {
             </div>
 
             {/* Modal pour les détails */}
-            <Modal
-                open={openModal}
-                onClose={handleCloseModal}
-                closeAfterTransition
-                BackdropComponent={Backdrop}
-                BackdropProps={{
-                    timeout: 500,
-                }}
-            >
-                <Fade in={openModal}>
-                    <div className="modal-container">
-                        <div className="modal-content">
-                            <h2>Détails du Wagon</h2>
-                            {details.length > 0 && (
-                                <>
-                                    <table className="data-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Famille</th>
-                                                <th>Quantité</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {details.map((detail, idx) => (
-                                                <tr key={idx}>
-                                                    <td>{detail.nom_famille}</td>
-                                                    <td>{detail.quantite}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+            <Modal open={openModal} onClose={handleCloseModal} >
+                 <Box sx={{
+                        position: "absolute",
+                        top: "50%", left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        width: { xs: "90%", sm: 600 },
+                        maxHeight: "80vh",
+                        overflowY: "auto",
+                        bgcolor: "background.paper",
+                        boxShadow: 24,
+                        p: 4,
+                        borderRadius: 2
+                        }}>
+                        <Typography variant="h6" gutterBottom>Détails du Wagon</Typography>
+                                <TableContainer component={Paper} variant="outlined">
+                                    <Table size="small">
+                                        <TableHead>
+                                        <TableRow>
+                                            <TableCell>Famille</TableCell>
+                                            <TableCell align="right">Quantité</TableCell>
+                                        </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {details.length > 0 ?(
+                                              details.map((detail, idx) => (
+                                               <TableRow key={idx}>
+                                                <TableCell>{detail?.nom_famille || 'N/A'}</TableCell>
+                                                <TableCell align="right">{detail?.quantite}</TableCell>
+                                                </TableRow>
+                                                ))
+                                                ) : (
+                                                <TableRow>
+                                                <TableCell colSpan={2} align="center">Aucune famille associée</TableCell>
+                                                </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
                                       {["admin","cuiseur"].includes(role) &&(
                                         <>
                                     <Box display="flex" alignItems="center" mb={2}>
@@ -455,6 +541,73 @@ const WagonVisualization = () => {
                                         <Typography ml={1}><strong>Anneaux Bullers</strong></Typography>
                                     </Box>
                                     </>)}
+                                {allEssais.length > 0 && (
+                                    <Box
+                                        mb={2}
+                                        sx={{
+                                            maxHeight: 170,      
+                                            width: "100%",       
+                                            overflow: "auto",    
+                                            border: "1px solid #ddd",
+                                            borderRadius: 1,
+                                            p: 1
+                                        }}
+                                        >
+                                        <Box display="flex" gap={2} minWidth="max-content">
+
+                                            {Object.values(
+                                            allEssais.reduce((acc, essai) => {
+                                                if (!acc[essai.service.nom_service]) acc[essai.service.nom_service] = [];
+                                                acc[essai.service.nom_service].push(essai);
+                                                return acc;
+                                            }, {})
+                                            ).map((essaisByService, idx, arr) => (
+                                            <Box
+                                                key={idx}
+                                                minWidth="120px"
+                                                mr={2}
+                                                pr={2}
+                                                sx={{
+                                                borderRight: idx !== arr.length - 1 ? '1px solid #ccc' : 'none', 
+                                                }}
+                                            >
+                                                <Box display="flex" alignItems="center" mb={1}>
+                                                <Box
+                                                    sx={{
+                                                    width: 12,
+                                                    height: 12,
+                                                    borderRadius: '50%',
+                                                    backgroundColor: essaisByService[0].service.color || '#999',
+                                                    mr: 1
+                                                    }}
+                                                />
+                                                <Typography fontWeight="bold" fontSize="0.9rem">
+                                                    {essaisByService[0].service.nom_service}
+                                                </Typography>
+                                                </Box>
+                                                {essaisByService.map((essai) => (
+                                                <Box key={essai.id} display="flex" alignItems="center" mb={0.5}>
+                                                    <input
+                                                    type="checkbox"
+                                                    checked={selectedEssais.includes(essai.id)}
+                                                    onChange={() => {
+                                                        setSelectedEssais(prev =>
+                                                        prev.includes(essai.id)
+                                                            ? prev.filter(id => id !== essai.id)
+                                                            : [...prev, essai.id]
+                                                        );
+                                                    }}
+                                                    />
+                                                    <Typography ml={0.5} fontSize="0.85rem">
+                                                    {essai.nom_essais}
+                                                    </Typography>
+                                                </Box>
+                                                ))}
+                                            </Box>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                    )}
                                     {footerData && (
                                         <div className="footer-info">
                                             <p><strong>Historique de traitement</strong></p>
@@ -463,8 +616,7 @@ const WagonVisualization = () => {
                                             <p>Fin estimée : {footerData.fin}</p>
                                         </div>
                                     )}
-                                </>
-                            )}
+                               
                             <Box display="flex" justifyContent="space-between" mt={3}>
                                 <Button 
                                     onClick={handleCloseModal} 
@@ -472,25 +624,33 @@ const WagonVisualization = () => {
                                 >
                                     Fermer
                                 </Button>
-                                {["admin","cuiseur"].includes(role) &&(
-                                <>
+                                {/* {["admin","cuiseur"].includes(role) &&(
+                                <> */}
                                     <Button
                                         variant="contained"
                                         color="success"
                                         onClick={async () => {
-                                        await updateAnneaux(); // Mise à jour des anneaux
-                                         handleRefresh();
-                                         handleCloseModal();      
+                                        if (role =="admin" ||  role == "cuiseur") {
+                                        await updateAnneaux(); 
+                                            }
+                                         if (serviceSansEssaiIds.includes(user.id_service) || selectedEssais.length === 0 ) {
+                                            handleCloseModal();
+                                            return;
+                                        }
+                                        await saveEssais();  
                                         }}
+                                        //disabled={isSavingEssais||isUpdatingAnneaux ||selectedEssais.length === 0}
                                         >
-                                        Valider
+                                        {isSavingEssais||isUpdatingAnneaux ? (
+                                        <CircularProgress size={22} color="inherit" />
+                                        ) : (
+                                        "Valider"
+                                        )}
                                     </Button>
-                                </>
-                                )}
+                                {/* </>
+                                )} */}
                             </Box>
-                        </div>
-                    </div>
-                </Fade>
+                </Box>
             </Modal>
         </Box>
     </SidebarChef>

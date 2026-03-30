@@ -136,6 +136,7 @@ class ControleController extends Controller
 
         $result = [];
         $frequencesDejaFaitesParFour = [];
+        $grouped = [];
 
         foreach ($controles as $controle) {
             $cfAFaire = [];
@@ -173,11 +174,20 @@ class ControleController extends Controller
                             break;
                     }
                 }
+                //Si cette fréquence pour ce four n'existe pas encore,alors je la crée avec total = 0 et done = 0.
+                if (!isset($grouped[$fourId][$controle->frequence])) {
+                    $grouped[$fourId][$controle->frequence] = [
+                        'total' => 0,
+                        'done' => 0
+                    ];
+                }
 
-                if (!$dejaFait) {
-                    $cfAFaire[] = $cf;
+                $grouped[$fourId][$controle->frequence]['total']++;
+
+                if ($dejaFait) {
+                    $grouped[$fourId][$controle->frequence]['done']++;
                 } else {
-                    $frequencesDejaFaitesParFour[$fourId][] = $controle->frequence;
+                    $cfAFaire[] = $cf;
                 }
             }
 
@@ -185,6 +195,14 @@ class ControleController extends Controller
                 $controleCopy = $controle->toArray();
                 $controleCopy['controle_fours'] = $cfAFaire;
                 $result[] = $controleCopy;
+            }
+        }
+        foreach ($grouped as $fourId => $frequences) {
+            foreach ($frequences as $freq => $counts) {
+
+                if ($counts['done'] === $counts['total']) {
+                    $frequencesDejaFaitesParFour[$fourId][] = $freq;
+                }
             }
         }
 

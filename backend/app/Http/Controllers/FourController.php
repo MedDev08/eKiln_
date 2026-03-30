@@ -7,29 +7,30 @@ use App\Models\Four;
 
 class FourController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         $fours = Four::all();
         return response()->json($fours);
     }
     public function updateCadence(Request $request, $id)
-{
-    $request->validate([
-        'new_cadence' => 'required|numeric|min:1'
-    ]);
-
-    try {
-        $four = Four::updateCadence($id, $request->new_cadence);
-        return response()->json([
-            'success' => true,
-            'four' => $four,
-            'message' => 'Cadence et durée de cuisson mises à jour avec succès'
+    {
+        $request->validate([
+            'new_cadence' => 'required|numeric|min:1',
+            'newObj_density' => 'required|numeric|min:1',
         ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreur lors de la mise à jour: ' . $e->getMessage()
-        ], 500);
-    }
-}
 
+        try {
+            $four = Four::updateCadence($id, $request->new_cadence, $request->newObj_density);
+            return response()->json([
+                'success' => true,
+                'four' => $four,
+                'message' => 'Cadence et durée de cuisson mises à jour avec succès'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

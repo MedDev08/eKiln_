@@ -64,6 +64,10 @@ class Chargement extends BaseAuditableModel
     {
         return $this->hasMany(DetailChargement::class, 'id_chargement');
     }
+    public function essais()
+    {
+        return $this->hasMany(DetailEssai::class, 'id_chargement', 'id');
+    }
     public function anneaux()
     {
         return $this->hasOne(AnneauxBullers::class, 'id_chargement', 'id');

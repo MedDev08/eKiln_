@@ -78,29 +78,41 @@ const Header = ({ title, subtitle }) => (
   </Box>
 );
 
-export default function GestionWagons() {
+export default function GestionServices() {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode); // Ajouté pour utiliser les tokens de couleur
-  const [wagons, setWagons] = React.useState([]);
+  const [services, setServices] = React.useState([]);
   const [searchText, setSearchText] = React.useState('');
-  const [filteredWagons, setFilteredWagons] = React.useState([]);
+ const [filteredServices, setFilteredServices] = React.useState([]);
   const [openDialog, setOpenDialog] = React.useState(false);
   const [deleteId, setDeleteId] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const navigate = useNavigate();
-  // const token = localStorage.getItem('token');
-
   // Snackbar state (ajouté depuis Familles.jsx)
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarMessage, setSnackbarMessage] = React.useState('');
   const [snackbarSeverity, setSnackbarSeverity] = React.useState('success');
 
   const columns = [
-    { field: 'id_wagon', headerName: 'ID', width: 100 },
-    { field: 'num_wagon', headerName: 'Numéro Wagon', width: 200 },
-    { field: 'type_wagon', headerName: 'Type', width: 200 },
-    { field: 'statut', headerName: 'statut', width: 200 },
+    { field: 'id', headerName: 'ID', width: 100 },
+    { field: 'nom_service', headerName: 'Service', width: 200 },
+    { field: 'color', headerName: 'Couleur', width: 200 ,
+       renderCell: (params) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box
+        sx={{
+          width: 20,
+          height: 20,
+          borderRadius: '4px',
+          backgroundColor: params.value,
+          border: '1px solid #ccc'
+        }}
+      />
+      <span>{params.value}</span>
+    </Box>
+  )
+     },
     {
       field: 'actions',
       headerName: 'Actions',
@@ -110,13 +122,13 @@ export default function GestionWagons() {
         <>
           <IconButton
             color="primary"
-            onClick={() => navigate(`/settings/wagons/edit/${params.row.id_wagon}`)}
+            onClick={() => navigate(`/settings/services/edit/${params.row.id}`)}
           >
             <EditIcon />
           </IconButton>
           <IconButton
             color="error"
-            onClick={() => handleDeleteClick(params.row.id_wagon)}
+            onClick={() => handleDeleteClick(params.row.id)}
           >
             <DeleteIcon />
           </IconButton>
@@ -125,43 +137,45 @@ export default function GestionWagons() {
     },
   ];
 
-  React.useEffect(() => {
-    const fetchWagons = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:8000/api/wagons1', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+ React.useEffect(() => {
+  const fetchServices  = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get("http://localhost:8000/api/services", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-        if (response.data.success) {
-          setWagons(response.data.data);
-          setFilteredWagons(response.data.data);
-          const sortedWagons = response.data.data.sort((a, b) => b.id_wagon - a.id_wagon);
-        setWagons(sortedWagons);
-        setFilteredWagons(sortedWagons);
-        }
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch wagons');
-      } finally {
-        setLoading(false);
-      }
-    };
+      const data = response.data; 
 
-    fetchWagons();
-  }, []);
+      const sortedServices = data.sort((a, b) => b.id - a.id);
+
+      setServices(sortedServices);
+      setFilteredServices(sortedServices);
+    } catch (err) {
+      console.log(err);
+      setError("Erreur chargement type wagons");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchServices ();
+}, []);
+
+
 
   const handleSearch = (event) => {
     const value = event.target.value.toLowerCase();
     setSearchText(value);
-    const filtered = wagons.filter(wagon =>
-      Object.values(wagon).some(field =>
+    const filtered = services.filter(service  =>
+      Object.values(service ).some(field =>
         String(field).toLowerCase().includes(value)
       )
     );
-    setFilteredWagons(filtered);
+    setFilteredServices(filtered);
   };
 
-  const handleAddClick = () => navigate('/settings/wagons/add');
+  const handleAddClick = () => navigate('/settings/services/add');
 
   const handleDeleteClick = (id) => {
     setDeleteId(id);
@@ -171,14 +185,14 @@ export default function GestionWagons() {
   const handleConfirmDelete = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.delete(`http://localhost:8000/api/wagons1/${deleteId}`, {
+      const response = await axios.delete(`http://localhost:8000/api/services/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
-        setWagons(prev => prev.filter(wagon => wagon.id_wagon !== deleteId));
-        setFilteredWagons(prev => prev.filter(wagon => wagon.id_wagon !== deleteId));
-        setSnackbarMessage("Wagon supprimé avec succès");
+        setServices(prev => prev.filter(service => service.id !== deleteId));
+        setFilteredServices(prev => prev.filter(service => service.id !== deleteId));
+        setSnackbarMessage("Service supprimé avec succès");
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
       }
@@ -198,15 +212,15 @@ export default function GestionWagons() {
     setDeleteId(null);
   };
 
-  if (loading) return <div>Loading wagons...</div>;
+  if (loading) return <div>Loading Services...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <SidebarChef initialPath="/settings/wagons">
+    <SidebarChef initialPath="/settings/services">
       <Box m="30px">
         <Header
-          title="WAGON MANAGEMENT"
-          subtitle="List of wagons for Management"
+          title="Gestion des Services"
+          subtitle="Liste des services"
         />
         <Box
           mt="25px"
@@ -268,22 +282,22 @@ export default function GestionWagons() {
               }}
               onClick={handleAddClick}
             >
-              Add Wagon
+              Add Service
             </Button>
           </Box>
 
           <DataGrid
-            rows={filteredWagons}
+            rows={filteredServices}
             columns={columns}
             loading={loading}
             pageSize={5}
             rowsPerPageOptions={[5]}
-            getRowId={(row) => row.id_wagon}
-            components={{ Toolbar: GridToolbar }} // Ajouté depuis Familles.jsx
+            getRowId={(row) => row.id}
+            components={{ Toolbar: GridToolbar }}
           />
 
           <Dialog open={openDialog} onClose={handleCancelDelete}>
-            <DialogTitle>Are you sure you want to delete this wagon?</DialogTitle>
+            <DialogTitle>Are you sure you want to delete this Service?</DialogTitle>
             <DialogActions>
               <Button onClick={handleCancelDelete}>Cancel</Button>
               <Button onClick={handleConfirmDelete} color="error">
@@ -292,7 +306,6 @@ export default function GestionWagons() {
             </DialogActions>
           </Dialog>
 
-          {/* Ajout du Snackbar depuis Familles.jsx */}
           <Snackbar
             open={snackbarOpen}
             autoHideDuration={3000}

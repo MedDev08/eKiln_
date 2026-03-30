@@ -39,7 +39,8 @@ export default function ManageUsersEdit() {
     Nom: '',
     Prenom: '',
     Role: '',
-    Password: ''
+    Password: '',
+    id_service:'',
   });
   const [loading, setLoading] = useState({ form: true, submit: false });
   const [error, setError] = useState('');
@@ -47,7 +48,26 @@ export default function ManageUsersEdit() {
   const [familles, setFamilles] = useState([]);
   const [selectedFamilles, setSelectedFamilles] = useState([]);
   const [userPolyvalences, setUserPolyvalences] = useState([]);
+  const [services, setServices] = useState([]);
   const token = localStorage.getItem('token');
+  
+   useEffect(() => {
+      const fetchServices = async () => {
+        try {
+          const res = await axios.get(
+            'http://localhost:8000/api/services',
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+  
+          setServices(res.data);
+  
+        } catch (err) {
+          console.error(err);
+        }
+      };
+  
+      fetchServices();
+    }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -56,13 +76,14 @@ export default function ManageUsersEdit() {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        const { Matricule, Nom, Prenom, Role } = userResponse.data.data;
+        const { Matricule, Nom, Prenom, Role ,id_service} = userResponse.data.data;
         setFormData({
           Matricule,
           Nom,
           Prenom,
           Role,
-          Password: ''
+          Password: '',
+          id_service: id_service || ''
         });
 
         if (Role === 'trieur') {
@@ -101,7 +122,8 @@ export default function ManageUsersEdit() {
         nom: formData.Nom,
         prenom: formData.Prenom,
         role: formData.Role,
-        password: formData.Password || undefined
+        password: formData.Password || undefined,
+        id_service: formData.id_service || '',
       };
 
       await axios.put(`http://localhost:8000/api/users/${id}`, userData, {
@@ -140,7 +162,8 @@ export default function ManageUsersEdit() {
         Nom: '',
         Prenom: '',
         Role: '',
-        Password: ''
+        Password: '',
+        id_service:''
       });
       setSelectedFamilles([]);
 
@@ -241,7 +264,22 @@ export default function ManageUsersEdit() {
             ))}
           </Select>
         </FormControl>
-
+           <TextField
+              select
+              fullWidth
+              margin="normal"
+              label="Service"
+              name="id_service"
+              value={formData.id_service}
+              onChange={handleChange}
+              required
+              >
+              {services.map(service => (
+                  <MenuItem key={service.id} value={service.id}>
+                  {service.nom_service}
+                  </MenuItem>
+              ))}
+            </TextField>
         {formData.Role !== 'trieur' && (
           <TextField
             fullWidth

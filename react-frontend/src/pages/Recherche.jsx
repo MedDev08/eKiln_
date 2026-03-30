@@ -37,7 +37,7 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import DeleteIcon from "@mui/icons-material/Delete";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 
 const StatCard = ({ title, value, icon, subtitle  }) => {
   return (
@@ -153,7 +153,12 @@ export default function Recherche() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chargementToDelete, setChargementToDelete] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState("");
-  // const [anneaux, setAnneaux] = useState([]);
+  const [openEssaisModal, setOpenEssaisModal] = useState(false);
+  const [selectedEssais, setSelectedEssais] = useState([]);
+  const [selectedEssaisCheckbox, setSelectedEssaisCheckbox] = useState([]);
+  const [essaisMessage, setEssaisMessage] = useState("");
+  const [loadingEssais, setLoadingEssais] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [searchParams, setSearchParams] = useState({
     matricule: "",
@@ -184,6 +189,7 @@ export default function Recherche() {
   };
   const handleOpenModal = (chargement , mode) => {
     setSelectedChargement({...chargement , mode});
+    console.log("chargement", chargement);
     setOpenModal(true);
   };
   const fetchInitialData = async () => {
@@ -201,9 +207,7 @@ export default function Recherche() {
     setFours(foursRes.data);
     setWagons(wagonsRes.data.data);
     setUsers(usersRes.data.data);
-    // console.log("users",usersRes.data.data);
     settype_wagon(typeWagonsRes.data);
-    // console.log("type_wagon",typeWagonsRes.data);
 
   } catch (err) {
     console.error("Erreur fetchInitialData :", err);
@@ -227,10 +231,7 @@ useEffect(() => {
           per_page: rowsPerPage
         }
       });
-      console.log("reponse",res.data.data.data);
-      console.log("Totaux :", res.data.totaux);
-      console.log("Densité par four :", res.data.densite_par_four);
-    //  setChargements(res.data.data.data || []);   //les chargements sont ici
+
       const wagons = res.data.data.data || [];
       const wagonsWithDetails = wagons.map(wagon => {
       const containsBallast = wagon.details?.some(
@@ -240,7 +241,7 @@ useEffect(() => {
     });
 
     setChargements(wagonsWithDetails);
-    console.log("chargement",wagonsWithDetails);
+    // console.log("chargement",wagonsWithDetails);
     setDensity(res.data.densite_par_four);
     setTotal(res.data.data.total || 0);        // ou last_page*rowsPerPage si total n'existe pas
     setTotaux(res.data.totaux || { chargements: 0,
@@ -277,23 +278,10 @@ useEffect(() => {
       setLoading(false);
     }
   };
-  // const fetchAnneaux = async () => {
-  //   try {
-  //     const token = localStorage.getItem("token");
-  //     const res = await axios.get("http://localhost:8000/api/all-chargement-ids", {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     setAnneaux(res.data.ids); // stocke tous les IDs de chargement
-  //     console.log("id_chargemet",res.data.ids);
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // };
+  
   useEffect(() => {
     fetchHistorique();
-    // fetchAnneaux();
-    // const interval = setInterval(fetchHistorique, 60000);
-    // return () => clearInterval(interval);
+
   }, [searchParams, page, rowsPerPage]);
     const handleDeleteClick = (chargement) => {
       setChargementToDelete(chargement);
@@ -301,6 +289,7 @@ useEffect(() => {
     };
     const confirmDelete = async () => {
       try {
+        setIsDeleting(true);
         const token = localStorage.getItem("token");
 
         await axios.delete(
@@ -308,7 +297,7 @@ useEffect(() => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        // enlever l’élément du tableau après suppression
+        
         setChargements(prev =>
           prev.filter((c) => c.id !== chargementToDelete.id)
         );
@@ -320,8 +309,66 @@ useEffect(() => {
 
       } catch (error) {
         console.error("Erreur suppression :", error);
+      } finally {
+        setIsDeleting(false); 
       }
     };
+    const handleOpenEssaisModal = async (chargement) => {
+      try {
+      setLoadingEssais(true);
+       setOpenEssaisModal(true); 
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`http://localhost:8000/api/essais`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            chargement_id: chargement.id,
+          }
+        });
+
+        setSelectedEssais(res.data.data|| []); 
+
+        const existingIds = chargement.essais?.map(d => d.id_essais) || [];
+        setSelectedEssaisCheckbox(existingIds);
+        console.log(existingIds);
+      
+      } catch (err) {
+        console.error("Erreur récupération essais :", err);
+        setSelectedEssais([]);
+      } finally {
+        setLoadingEssais(false); 
+      }
+    };
+    useEffect(() =>{
+      if(!selectedChargement) return;
+       handleOpenEssaisModal();
+    },[]);
+    const enregistrerEssais = async () => {
+        try {
+          const token = localStorage.getItem("token");
+
+          const res =  await axios.post(
+            "http://localhost:8000/api/details-essais",
+            {
+              chargement_id: selectedChargement?.id,
+              essais_ids: selectedEssaisCheckbox
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          setEssaisMessage(res.data.message);
+          setTimeout(() => setEssaisMessage(""), 3000);
+          setOpenEssaisModal(false);
+
+          fetchHistorique();
+
+          setSelectedEssaisCheckbox([]);
+
+        } catch (err) {
+          console.error("Erreur enregistrement essais :", err.response?.data || err.message);
+         
+        } 
+      };
+
   const boxStyle = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, fontSize: 20 };
 
   const handleFilter = () => {
@@ -460,6 +507,13 @@ useEffect(() => {
           </Grid>
         </Paper>
         {/* Tableau */}
+        {essaisMessage && (
+            <Box sx={{ mb: 2 }}>
+              <Alert severity= "success" variant="filled" sx={{ borderRadius: 2 }}>
+                {essaisMessage}
+              </Alert>
+            </Box>
+          )}
          {editSuccess && (
                   <Box sx={{ mb: 2 }}>
                     <Alert severity="success" variant="filled" sx={{ borderRadius: 2 }}>
@@ -510,14 +564,36 @@ useEffect(() => {
                       <TableRow key={row.id}>
                        <TableCell>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                           {row.anneaux && ( 
-                            <Box sx={{ ...boxStyle, color: "gold" }}>
-                              <Circle fontSize="small" />
-                            </Box>
-                          )}
+                          {Array.from(
+                              new Map(
+                                row.essais?.filter(d => d.essai?.service) 
+                                  .map(d => [d.essai.service.id, d.essai.service]) 
+                              ).values() || []
+                             ).map((service) => (
+                                <Tooltip title={service.nom_service} key={service.id}>
+                                  <Box
+                                    sx={{
+                                      ...boxStyle,
+                                      color: service.color || " ",
+                                    }}
+                                  >
+                                    <Circle fontSize="small" />
+                                  </Box>
+                                </Tooltip>
+                              ))
+                           }
                           {row.containsBallast && (
                             <Box sx={{ ...boxStyle, color: "red" }}>
+                              <Tooltip title ="Ballast">
                               <FlagIcon fontSize="small" />
+                              </Tooltip>
+                            </Box>
+                          )}
+                          {row.anneaux && ( 
+                            <Box sx={{ ...boxStyle, color: "gold" }}>
+                              <Tooltip title ="Anneaux">
+                              <Circle fontSize="small" />
+                              </Tooltip>
                             </Box>
                           )}
                         </Box>
@@ -564,6 +640,19 @@ useEffect(() => {
                               <VisibilityIcon/>
                               </IconButton>
                              </Tooltip>
+                             <Tooltip title="Essais">
+                                <IconButton
+                                  color="info"
+                                  size="small"
+                                  onClick={() => {
+                                    handleOpenEssaisModal(row);
+                                    setSelectedChargement(row);
+                                  }}
+                                  
+                                >
+                                  <AssignmentTurnedInIcon />
+                                </IconButton>
+                              </Tooltip>
                              <Tooltip title="Modifier">
                                 <IconButton color="secondary" 
                                   size="small"
@@ -708,13 +797,91 @@ useEffect(() => {
                 variant="contained"
                 color="error"
                 onClick={confirmDelete}
+                disabled={isDeleting}
                 sx={{ width: "45%" }}
-              >
-                Supprimer
+                >
+                {isDeleting ? (
+                  <CircularProgress size={22} color="inherit" />
+                ) : (
+                  "Supprimer"
+                )}
               </Button>
             </Box>
           </Box>
         </Modal>
+    {selectedChargement && (
+      <Modal open={openEssaisModal} onClose={() => setOpenEssaisModal(false)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 500,
+            maxHeight: "70vh",
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+            overflowY: "auto"
+          }}
+        >
+          <Typography variant="h6" mb={2} fontWeight="bold">
+            Essais pour le chargement #{selectedChargement?.id || "-"}
+          </Typography>
+
+          {loadingEssais ? (
+            <Box display="flex" justifyContent="center" py={4}>
+              <CircularProgress />
+            </Box>
+           ) : selectedEssais.length > 0 ? (
+            <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0 }}>
+              {selectedEssais.map((essai) => (
+                <Box
+                  component="li"
+                  key={essai.id}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    py: 0.5,
+                    borderBottom: "1px solid #eee",
+                  }}
+                >
+                  <Typography>{essai.nom_essais}</Typography>
+                  <input
+                    type="checkbox"
+                    checked={selectedEssaisCheckbox.includes(essai.id)}
+                    onChange={() => {
+                      setSelectedEssaisCheckbox((prev) =>
+                        prev.includes(essai.id)
+                          ? prev.filter((id) => id !== essai.id)
+                          : [...prev, essai.id]
+                      );
+                    }}
+                  />
+                </Box>
+              ))}
+            </Box>
+          ) : (   
+            <Typography color="text.secondary">Aucun essai trouvé</Typography>
+          )}
+
+          <Box sx={{ textAlign: "right", mt: 3, display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Button variant="outlined" onClick={() => setOpenEssaisModal(false)}>
+              Fermer
+            </Button>
+            <Button
+              variant="contained"
+              disabled={selectedEssaisCheckbox.length === 0}
+              onClick={enregistrerEssais}
+            >
+              Enregistrer
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+    )}
   </SidebarChef>
   );
 }

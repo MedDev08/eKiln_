@@ -5,8 +5,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\BaseAuditableModel;
 
-class Wagon extends Model
+class Wagon extends BaseAuditableModel
 {
     protected $primaryKey = 'id_wagon';
     protected $fillable = ['num_wagon', 'type_wagon', 'statut'];

@@ -4,10 +4,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\AnneauxBullersController;
+use App\Http\Controllers\DetailEssaiController;
 use App\Http\Controllers\ControleController;
 use App\Http\Controllers\DetailControleController;
 use App\Http\Controllers\ProprieteGrapheController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\EssaiController;
+use App\Http\Controllers\AnneauxBullersController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('/me', function () {
@@ -34,6 +37,7 @@ use App\Http\Controllers\AffectationController;
 use App\Http\Controllers\StatistiqueController;
 use App\Http\Controllers\TypeWagonController;
 use App\Http\Controllers\AuditController;
+use App\Models\DetailEssai;
 
 Route::get('/wagons/cooking-count', [WagonController::class, 'getCookingWagonsCount']);
 Route::get('/pieces/Somme', [FamilleController::class, 'getTotalPiecesSum']);
@@ -201,3 +205,22 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/propriete-graphe/four/{numFour}', [ProprieteGrapheController::class, 'getZonesByFour']);
 Route::get('/controles/by-four/{idFour}', [ControleController::class, 'getByFour']);
 Route::get('/trois-dernières-remarques/{id_four}', [DetailControleController::class, 'troisDernieresRemarques']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/services', [ServiceController::class, 'index']);
+    Route::post('/services', [ServiceController::class, 'store']);
+    Route::get('/services/{service}', [ServiceController::class, 'show']);
+    Route::put('/services/{service}', [ServiceController::class, 'update']);
+    Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
+});
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/essais', [EssaiController::class, 'index']);
+    Route::post('/essais', [EssaiController::class, 'store']);
+    Route::get('/essais/{id}', [EssaiController::class, 'show']);
+    Route::put('/essais/{id}', [EssaiController::class, 'update']);
+    Route::delete('/essais/{id}', [EssaiController::class, 'destroy']);
+});
+Route::post('/details-essais', [DetailEssaiController::class, 'store'])->middleware('auth:sanctum');
+Route::get('/essais-historique/{numFour}', [DetailEssaiController::class, 'history']);
+Route::middleware('auth:sanctum')->post('/essais/{id}/valeur', [DetailEssaiController::class, 'saveValeur']);
+Route::delete('/detail-essais/{id}', [DetailEssaiController::class, 'destroy']);
+Route::get('/services-sans-essais', [ServiceController::class, 'servicesSansEssais']);

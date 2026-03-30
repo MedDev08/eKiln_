@@ -17,6 +17,7 @@ import {
   TableHead,
   TableCell,
   Chip,
+  Grid
 } from '@mui/material';
 import axios from 'axios';
 import SidebarChef from '../../components/layout/SidebarChef';
@@ -321,6 +322,8 @@ const save = async (frequence) => {
           </Paper>
         )}
         </Box>
+         </> 
+      )}
         
          {selectedFour && (
         <Box display="flex" gap={3} alignItems="flex-start">
@@ -357,24 +360,16 @@ const save = async (frequence) => {
                     </Alert>
                   )}
                   <Divider sx={{ mb: 2 }} />
-                <Box sx={{ flexGrow: 1 }}>
-                  {list.map(c => (
-                    <Box
-                      key={c.id}
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns: "220px 1fr",
-                        alignItems: "center",
-                        columnGap: 2,
-                        mb: 1.5,
-                        width: "100%"
-                      }}
-                    >
-                      <Typography >
-                        {c.libelle}
-                      </Typography>
-
-                      {c.type === 'number' && (
+            <Box sx={{ flexGrow: 1 }}>
+            {list.map(c => (
+            <Grid container   key={c.id}  rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }} sx={{ mb: 2 }} >
+                <Grid size={6}>
+                  <Typography>
+                    {c.libelle}
+                  </Typography>
+                </Grid>
+                <Grid size={6}>
+                  {c.type === 'number' && (
                         <TextField
                           type="number"
                           fullWidth
@@ -385,7 +380,7 @@ const save = async (frequence) => {
                         />
                       )}
 
-                      {c.type === 'text' && (
+                  {c.type === 'text' && (
                         <TextField
                           fullWidth
                           label="Valeur"
@@ -395,22 +390,23 @@ const save = async (frequence) => {
                         />
                       )}
 
-                      {c.type === 'checkbox' && (
-                       <Box display="flex" justifyContent= "flex-end">
-                        <Checkbox
-                          checked={values[c.id] === '1'}
-                          onChange={e =>
-                            setValue(c.id, e.target.checked ? '1' : '0')
-                          }
-                          sx={{
-                            color: emptyRequiredFields[c.id] ? 'error.main' : undefined
-                          }}
-                        />
-                        </Box>
-                      )}
+                  {c.type === 'checkbox' && (  
+                    <Box display="flex" justifyContent= "flex-end">
+                      <Checkbox
+                        checked={values[c.id] === '1'}
+                            onChange={e =>
+                              setValue(c.id, e.target.checked ? '1' : '0')
+                            }
+                            sx={{
+                              color: emptyRequiredFields[c.id] ? 'error.main' : undefined
+                            }}
+                      />
                     </Box>
-                  ))}
-                </Box>
+                  )}
+                </Grid>
+              </Grid>
+            ))}
+            </Box>
                <Box mt="auto">
                   <Button
                     fullWidth
@@ -479,8 +475,6 @@ const save = async (frequence) => {
           </Box>
           </Box>
           )}
-       </> 
-      )}
      
       </Box>
     </SidebarChef>

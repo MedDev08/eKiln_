@@ -341,9 +341,24 @@ class ChargementController extends Controller
             if (Cache::has($cacheKey)) {
                 return response()->json(Cache::get($cacheKey));
             }
+            $user = Auth::user();
+            $query = Chargement::with(['user', 'wagon', 'four', 'type_wagon', 'details', 'anneaux']);
+
+            if ($user->role == 'admin') {
+                $query->with('essais.essai.service');
+            } else {
+                $query->with([
+                    'essais' => function ($q) use ($user) {
+                        $q->whereHas('essai.service', function ($sq) use ($user) {
+                            $sq->where('id', $user->id_service);
+                        });
+                    },
+                    'essais.essai.service'
+                ]);
+            }
 
             // Get fresh data
-            $f3 = Chargement::with(['wagon', 'four', 'type_wagon', 'anneaux', 'details'])
+            $f3 = (clone $query)
                 ->where('id_four', 6)
                 ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir'])
                 ->orderBy('datetime_sortieEstime', 'asc')
@@ -355,16 +370,17 @@ class ChargementController extends Controller
                         'color' => $chargement->type_wagon->color ?? '#cccccc',
                         'num_wag' => $chargement->wagon->num_wagon ?? 'N/A',
                         'Statut' => $chargement->statut,
-                        'debut_cuisson' => $chargement->datetime_chargement,
+                        'debut_cuisson' => $chargement->date_entrer,
                         'FinCuissonEstimee' => $chargement->datetime_sortieEstime,
                         'username' => $chargement->user->matricule ?? 'Unknown',
+                        'essais' => $chargement->essais,
                         'anneaux' => $chargement->anneaux,
                         'has_famille_37' => $chargement->details
                             ->contains(fn($detail) => $detail->id_famille == 37),
                     ];
                 });
 
-            $f4 = Chargement::with(['wagon', 'four', 'type_wagon', 'anneaux', 'details'])
+            $f4 = (clone $query)
                 ->where('id_four', 7)
                 ->whereIn('statut', ['en attente', 'en cuisson', 'prêt à sortir'])
                 ->orderBy('datetime_sortieEstime', 'asc')
@@ -376,9 +392,10 @@ class ChargementController extends Controller
                         'color' => $chargement->type_wagon->color ?? '#cccccc',
                         'num_wag' => $chargement->wagon->num_wagon ?? 'N/A',
                         'Statut' => $chargement->statut,
-                        'debut_cuisson' => $chargement->datetime_chargement,
+                        'debut_cuisson' => $chargement->date_entrer,
                         'FinCuissonEstimee' => $chargement->datetime_sortieEstime,
                         'username' => $chargement->user->matricule ?? 'Unknown',
+                        'essais' => $chargement->essais,
                         'anneaux' => $chargement->anneaux,
                         'has_famille_37' => $chargement->details
                             ->contains(fn($detail) => $detail->id_famille == 37),
@@ -409,12 +426,26 @@ class ChargementController extends Controller
     // Dans votre contrôleur API qui gère chargement-details
     public function getChargementDetails($id_chargement)
     {
-        $chargement = Chargement::with(['user', 'details.famille', 'anneaux'])->find($id_chargement);
+        $user = Auth::user();
+        $query = Chargement::with(['user', 'details.famille', 'anneaux']);
+
+        if ($user->role == 'admin') {
+            $query->with('essais.essai.service');
+        } else {
+            $query->with([
+                'essais' => function ($q) use ($user) {
+                    $q->whereHas('essai.service', function ($sq) use ($user) {
+                        $sq->where('id', $user->id_service);
+                    });
+                },
+                'essais.essai.service'
+            ]);
+        }
+        $chargement = $query->find($id_chargement);
 
         if (!$chargement) {
             return response()->json(['error' => 'Chargement not found'], 404);
         }
-
         return response()->json([
             'details' => $chargement->details->map(function ($detail) {
                 return [
@@ -423,6 +454,16 @@ class ChargementController extends Controller
                     'quantite' => $detail->quantite
                 ];
             }),
+            'essais' => $chargement->essais->map(function ($essaiDetail) {
+                return [
+                    'id' => $essaiDetail->essai->id,
+                    'nom_essais' => $essaiDetail->essai->nom_essais,
+                    'service' => $essaiDetail->essai->service->nom_service,
+                    'color' => $essaiDetail->essai->service->color,
+                    'valeur' => $essaiDetail->valeur
+                ];
+            }),
+            'anneaux' => $chargement->anneaux,
             'username' => $chargement->user->nom . ' ' . $chargement->user->prenom, // ou juste ->matricule selon ce que vous voulez afficher
             'debut_cuisson' => $chargement->datetime_chargement,
             'FinCuissonEstimee' => $chargement->datetime_sortieEstime
@@ -1491,7 +1532,7 @@ class ChargementController extends Controller
             $perPage = $request->input('per_page', 10);
 
             //  Requête filtrée
-            $query = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'type_wagon', 'anneaux'])
+            $query = Chargement::with(['user', 'wagon', 'four', 'details.famille', 'type_wagon', 'essais.essai.service', 'anneaux'])
                 ->when($dateFrom, fn($q) => $q->whereDate('datetime_chargement', '>=', $dateFrom))
                 ->when($dateTo, fn($q) => $q->whereDate('datetime_chargement', '<=', $dateTo))
                 ->when($matricule, fn($q) => $q->whereHas('user', fn($q2) => $q2->where('matricule', 'like', "%{$matricule}%")))
@@ -1627,7 +1668,7 @@ class ChargementController extends Controller
                     'couvercles'  => $totalcouvercles,
                     'total_Pieces_actives' => $totalPiecesactives,
                     'densite' => $densite,
-                    'totalChargementsPourDensity' => $totalChargementsPourDensity
+                    //  'totalChargementsPourDensity' => $totalChargementsPourDensity
                 ],
             ]);
         } catch (\Exception $e) {

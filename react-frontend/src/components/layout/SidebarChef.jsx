@@ -26,6 +26,8 @@ import DonutSmallIcon from '@mui/icons-material/DonutSmall';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import TrackChangesIcon from '@mui/icons-material/TrackChanges';
 
 //  Thème global
 const appTheme = createTheme({
@@ -215,15 +217,29 @@ const NAVIGATION = [
   },
   {
     segment: 'controles',
-    title: 'Saisie des contrôles',
-    icon: <ChecklistIcon/>,
-    path: '/controles'
+    title: 'Contrôles',
+    icon: <ChecklistIcon />, 
+    path: '/controles',
+    children: [
+      {
+        segment: 'saisie',
+        title: 'Saisie des contrôles',
+        icon: <ChecklistIcon />,
+        path: '/controles/saisie'
+      },
+      {
+        segment: 'historique',
+        title: 'Historique des Contrôles',
+        icon: <HistoryIcon />,
+        path: '/controles/historique'
+      }
+    ]
   },
   {
-   segment:'historique-controles',
-   title: 'Historique des Contrôles',
-   icon: <HistoryIcon /> ,
-   path:'/historique-controles'
+    segment: 'historique-essais',
+    title: 'Historique des Essais',
+    icon: <HistoryIcon />,
+    path: '/historique-essais'
   },
   {
     segment: 'WagonVisualization',
@@ -237,6 +253,18 @@ const NAVIGATION = [
       icon: <SettingsApplicationsIcon />,
       path: '/settings',
       children: [
+        {
+          segment: 'services',
+          title: 'Services',
+          icon: <BusinessCenterIcon />, 
+          path: '/settings/services'
+        },
+        {
+          segment: 'essais',
+          title: 'Essais',
+          icon: <TrackChangesIcon />,
+          path: '/settings/essais'
+        },
         {
           segment: 'controles',
           title: 'Contrôles',
@@ -389,12 +417,61 @@ const NAV_CHEF = [
   //     icon: <HistoryIcon />,
   //     path:'/historique'
   // },
-  
+   {
+    segment: 'controles',
+    title: 'Contrôles',
+    icon: <ChecklistIcon />, 
+    path: '/controles',
+    children: [
+      {
+        segment: 'saisie',
+        title: 'Saisie des contrôles',
+        icon: <ChecklistIcon />,
+        path: '/controles/saisie'
+      },
+      {
+        segment: 'historique',
+        title: 'Historique des Contrôles',
+        icon: <HistoryIcon />,
+        path: '/controles/historique'
+      }
+    ]
+  },
+  {
+    segment: 'historique-essais',
+    title: 'Historique des Essais',
+    icon: <HistoryIcon />,
+    path: '/historique-essais'
+  },
+   {
+    segment: 'recherche',
+    title: 'Recherche',
+    icon: <SearchIcon />,
+    path: '/recherche'
+  },
   { segment: 'WagonVisualization',
     title: 'Wagon Visualization', 
     icon: <ViewModuleIcon />,
     path: '/WagonVisualization'
   },
+   {
+    segment: 'settings',
+    title: 'Settings',
+    icon: <SettingsApplicationsIcon />,
+    path: '/settings',
+    children: [
+      {
+        segment: 'services',
+        title: 'Services',
+        icon: <BusinessCenterIcon />, 
+        path: '/settings/services'
+      },
+      {
+        segment: 'essais',
+        title: 'Essais',
+        icon: <TrackChangesIcon />,
+        path: '/settings/essais'
+      },]},
   {
     segment: 'team',
     title: 'Team management',
@@ -433,6 +510,32 @@ const NAV_Cuiseur= [
     title: 'Chargements Four',
     icon: <LocalFireDepartmentIcon />, 
     path: '/cuiseur' 
+  },
+  {
+    segment: 'controles',
+    title: 'Contrôles',
+    icon: <ChecklistIcon />, 
+    path: '/controles',
+    children: [
+      {
+        segment: 'saisie',
+        title: 'Saisie des contrôles',
+        icon: <ChecklistIcon />,
+        path: '/controles/saisie'
+      },
+      {
+        segment: 'historique',
+        title: 'Historique des Contrôles',
+        icon: <HistoryIcon />,
+        path: '/controles/historique'
+      }
+    ]
+  },
+   {
+    segment: 'recherche',
+    title: 'Recherche',
+    icon: <SearchIcon />,
+    path: '/recherche'
   },
   // { segment: 'historique',
   //   title: 'Historique Chargements',
